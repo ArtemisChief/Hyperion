@@ -1,19 +1,13 @@
 package Hyperion;
 
 import javafx.fxml.FXML;
-import javafx.event.ActionEvent;
-import javafx.scene.control.Label;
-import javafx.scene.control.RadioButton;
-import javafx.scene.control.TextField;
-import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.*;
+import javafx.scene.input.MouseEvent;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.net.UnknownHostException;
-import java.nio.charset.Charset;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -24,21 +18,45 @@ public class Controller {
     @FXML
     private Label routerMacAddressLabel;
     @FXML
+    private Label infoLabel;
+    @FXML
     private TextField IPTxtField;
+    @FXML
+    private TextField stdNoTxtField;
     @FXML
     private RadioButton lsmRadioBtn;
     @FXML
     private RadioButton dsmRadioBtn;
 
     @FXML
-    public void initialize() {
+    protected void initialize() {
         localMacAddressLabel.setText("Local Mac: " + getLocalMac());
         routerMacAddressLabel.setText("Router Mac: " + getRouterMac());
+        infoLabel.setText("");
+    }
+
+    @FXML
+    // 显示说明信息
+    protected void updateInfo(MouseEvent event){
+        if(event.getSource()==localMacAddressLabel)
+            infoLabel.setText("This shows your local MAC address");
+        else if(event.getSource()==routerMacAddressLabel)
+            infoLabel.setText("This shows your router MAC address");
+        else if (event.getSource()==IPTxtField)
+            infoLabel.setText("Please type the dedicated server IP here");
+        else if (event.getSource()==stdNoTxtField)
+            infoLabel.setText("Please type your Student No. here");
+        else if (event.getSource()==lsmRadioBtn)
+            infoLabel.setText("This mode requests teacher and student use the same router");
+        else if (event.getSource()==dsmRadioBtn)
+            infoLabel.setText("This mode sends your check-in information to the dedicated server");
+        else
+            infoLabel.setText("Click here to complete check-in");
     }
 
     @FXML
     // 切换局域网/公网模式
-    protected void switchMode(ActionEvent event) {
+    protected void switchMode() {
         if (dsmRadioBtn.isSelected())
             IPTxtField.setDisable(false);
         else
@@ -80,20 +98,28 @@ public class Controller {
     // 得到第一跳路由器（默认网关）的MAC地址
     private String getRouterMac() {
         try {
+            Pattern pattern;
+            Matcher matcher;
+            String keyword;
+            int index;
+
             // 得到默认网关的IP地址
             String gateway = callCmd("ipconfig");
-            int index = gateway.contains("Default Gateway") ? gateway.indexOf("Default Gateway") : gateway.indexOf("默认网关");
-            gateway = gateway.substring(index);
-            index = gateway.indexOf(":") + 2;
-            gateway = gateway.substring(index, gateway.indexOf("\n")).trim();
+            keyword = (gateway.contains("Default Gateway") ? "Default Gateway" : "默认网关") + "(.\\s)+:\\s";
+            pattern = Pattern.compile(keyword);
+            matcher = pattern.matcher(gateway);
+            matcher.find();
+            index = matcher.end();
+            gateway = gateway.substring(index, gateway.indexOf("\n", index)).trim();
 
             // 得到默认网关的MAC地址
             String mac = callCmd("arp -a");
-            Pattern pattern = Pattern.compile(gateway + "\\s+");
-            Matcher matcher = pattern.matcher(mac);
+            keyword = gateway + "\\s+";
+            pattern = Pattern.compile(keyword);
+            matcher = pattern.matcher(mac);
             matcher.find();
             index = matcher.end();
-            return mac.substring(index, index + 17).toUpperCase();
+            return mac.substring(index, index + 17).toUpperCase().trim();
         } catch (Exception e) {
             e.printStackTrace();
             return null;
