@@ -1,8 +1,8 @@
 package Hyperion;
 
-import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.application.Platform;
 import javafx.scene.input.MouseEvent;
 
 import java.io.*;
@@ -14,10 +14,11 @@ import java.util.regex.Pattern;
 
 public class Controller {
 
-    private int serverPort = 60076;
+    private final int serverPort = 60076;
 
     private String localMac;
     private String routerMac;
+    private String broadCastIP;
 
     @FXML
     private Label localMacAddressLabel;
@@ -39,9 +40,11 @@ public class Controller {
     private ProgressIndicator progressIndicator;
 
     @FXML
+    // 初始化
     protected void initialize() {
         localMac = getLocalMac();
         routerMac = getRouterMac();
+        broadCastIP = getBroadCastIP();
 
         localMacAddressLabel.setText("Local Mac: " + localMac);
         routerMacAddressLabel.setText("Router Mac: " + routerMac);
@@ -128,7 +131,7 @@ public class Controller {
                         progressIndicator.setVisible(true);
                         progressIndicator.setProgress(-1);
                     });
-                    receivedString = sendUDP(getbroadCastIP(), serverPort, stdNoTxtField.getText() + "\n" + localMac);
+                    receivedString = sendUDP(broadCastIP, serverPort, stdNoTxtField.getText() + "\n" + localMac);
                 } catch (IOException e) {
                     Platform.runLater(() -> {
                         showSimpleAlert(Alert.AlertType.ERROR, "Error", "Cannot connect to the server, please check your network");
@@ -211,18 +214,22 @@ public class Controller {
     }
 
     // 得到广播地址
-    private String getbroadCastIP() throws SocketException {
+    private String getBroadCastIP() {
         String broadCastIP = null;
-        Enumeration<?> netInterfaces = NetworkInterface.getNetworkInterfaces();
-        while (netInterfaces.hasMoreElements()) {
-            NetworkInterface netInterface = (NetworkInterface) netInterfaces.nextElement();
-            if (!netInterface.isLoopback() && netInterface.isUp()) {
-                List<InterfaceAddress> interfaceAddresses = netInterface.getInterfaceAddresses();
-                for (InterfaceAddress interfaceAddress : interfaceAddresses)
-                    //只有 IPv4 网络具有广播地址，因此对于 IPv6 网络将返回 null。
-                    if (interfaceAddress.getBroadcast() != null)
-                        broadCastIP = interfaceAddress.getBroadcast().getHostAddress();
+        try {
+            Enumeration<?> netInterfaces = NetworkInterface.getNetworkInterfaces();
+            while (netInterfaces.hasMoreElements()) {
+                NetworkInterface netInterface = (NetworkInterface) netInterfaces.nextElement();
+                if (!netInterface.isLoopback() && netInterface.isUp()) {
+                    List<InterfaceAddress> interfaceAddresses = netInterface.getInterfaceAddresses();
+                    for (InterfaceAddress interfaceAddress : interfaceAddresses)
+                        //只有 IPv4 网络具有广播地址，因此对于 IPv6 网络将返回 null。
+                        if (interfaceAddress.getBroadcast() != null)
+                            broadCastIP = interfaceAddress.getBroadcast().getHostAddress();
+                }
             }
+        } catch (SocketException e) {
+            e.printStackTrace();
         }
 
         return broadCastIP;
