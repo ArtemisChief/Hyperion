@@ -1,23 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.Pane?>
-
-<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="160.0" prefWidth="420.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Hyperion.Controller">
-   <children>
-      <RadioButton fx:id="lsmRadioBtn" layoutX="248.0" layoutY="14.0" mnemonicParsing="false" onAction="#switchMode" onMouseEntered="#updateInfo" selected="true" text="Local Server Mode">
-         <toggleGroup>
-            <ToggleGroup fx:id="ServerMode" />
-         </toggleGroup>
-      </RadioButton>
-      <RadioButton fx:id="dsmRadioBtn" layoutX="249.0" layoutY="37.0" mnemonicParsing="false" onAction="#switchMode" onMouseEntered="#updateInfo" text="Dedicated Server Mode" toggleGroup="$ServerMode" />
-      <Label fx:id="localMacAddressLabel" layoutX="14.0" layoutY="14.0" onMouseEntered="#updateInfo" text="localMacAddress" />
-      <TextField fx:id="IPTxtField" disable="true" layoutX="14.0" layoutY="33.0" onMouseEntered="#updateInfo" prefHeight="23.0" prefWidth="185.0" promptText="Dedicated Server IP" />
-      <TextField fx:id="stdNoTxtField" layoutX="14.0" layoutY="94.0" onMouseEntered="#updateInfo" prefHeight="23.0" prefWidth="185.0" promptText="Student No." />
-      <Button layoutX="249.0" layoutY="94.0" mnemonicParsing="false" onAction="#sendMessage" onMouseEntered="#updateInfo" prefHeight="23.0" prefWidth="106.0" text="Check-in" />
-      <Label fx:id="routerMacAddressLabel" layoutX="14.0" layoutY="76.0" onMouseEntered="#updateInfo" text="routerMacAddress" />
-      <Label fx:id="infoLabel" layoutX="14.0" layoutY="139.0" text="info" />
-   </children>
+<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="160.0"
+      prefWidth="420.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="Hyperion.Controller">
+   <RadioButton fx:id="localModeRadioBtn" layoutX="248.0" layoutY="14.0" mnemonicParsing="false" onAction="#switchMode"
+                onMouseEntered="#updateInfo" selected="true" text="Local Server Mode">
+      <toggleGroup>
+         <ToggleGroup fx:id="ServerMode"/>
+      </toggleGroup>
+   </RadioButton>
+   <RadioButton fx:id="dedicatedModeRadioBtn" layoutX="249.0" layoutY="37.0" mnemonicParsing="false"
+                onAction="#switchMode" onMouseEntered="#updateInfo" text="Dedicated Server Mode"
+                toggleGroup="$ServerMode"/>
+   <Label fx:id="localMacAddressLabel" layoutX="14.0" layoutY="14.0" onMouseEntered="#updateInfo"
+          text="localMacAddress"/>
+   <TextField fx:id="IPTxtField" disable="true" layoutX="14.0" layoutY="33.0" onMouseEntered="#updateInfo"
+              prefHeight="23.0" prefWidth="185.0" promptText="Dedicated Server IP"/>
+   <TextField fx:id="stdNoTxtField" layoutX="14.0" layoutY="94.0" onMouseEntered="#updateInfo" prefHeight="23.0"
+              prefWidth="185.0" promptText="Student No."/>
+   <Button layoutX="249.0" layoutY="94.0" mnemonicParsing="false" onAction="#sendMessage" onMouseEntered="#updateInfo"
+           prefHeight="23.0" prefWidth="106.0" text="Check-in"/>
+   <Label fx:id="routerMacAddressLabel" layoutX="14.0" layoutY="76.0" onMouseEntered="#updateInfo"
+          text="routerMacAddress"/>
+   <Label fx:id="infoLabel" layoutX="14.0" layoutY="139.0" text="info"/>
 </Pane>
