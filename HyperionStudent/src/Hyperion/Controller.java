@@ -1,5 +1,7 @@
 package Hyperion;
 
+import com.sun.xml.internal.ws.policy.privateutil.PolicyUtils;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
@@ -12,6 +14,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class Controller {
+
+    private int serverPort = 60076;
 
     private String localMac;
     private String routerMac;
@@ -30,6 +34,10 @@ public class Controller {
     private RadioButton localModeRadioBtn;
     @FXML
     private RadioButton dedicatedModeRadioBtn;
+    @FXML
+    private Button checkInBtn;
+    @FXML
+    private ProgressIndicator progressIndicator;
 
     @FXML
     protected void initialize() {
@@ -39,6 +47,8 @@ public class Controller {
         localMacAddressLabel.setText("Local Mac: " + localMac);
         routerMacAddressLabel.setText("Router Mac: " + routerMac);
         infoLabel.setText("");
+
+        progressIndicator.setVisible(false);
     }
 
     @FXML
@@ -72,117 +82,151 @@ public class Controller {
     @FXML
     // 向服务器发送消息
     protected void sendMessage() {
-        StringBuilder message = new StringBuilder();
-        String receivedString = null;
-        Alert alert;
-
         if (stdNoTxtField.getText().equals("")) {
-            alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Error");
-            alert.setHeaderText(null);
-            alert.setContentText("Please input your Student No.");
-            alert.showAndWait();
+            showSimpleAlert(Alert.AlertType.ERROR, "Error", "Please input your Student No.");
             return;
         }
 
-        if (dedicatedModeRadioBtn.isSelected()) {
-            if (IPTxtField.getText().equals("")) {
-                alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("Error");
-                alert.setHeaderText(null);
-                alert.setContentText("Please input the Dedicated Server IP");
-                alert.showAndWait();
-                return;
-            }
+        if (dedicatedModeRadioBtn.isSelected() && IPTxtField.getText().equals("")) {
+            showSimpleAlert(Alert.AlertType.ERROR, "Error", "Please input the Dedicated Server IP");
+            return;
+        }
+
+        checkInBtn.setDisable(true);
+        localModeRadioBtn.setDisable(true);
+        dedicatedModeRadioBtn.setDisable(true);
+        IPTxtField.setDisable(true);
+        stdNoTxtField.setDisable(true);
+
+        Thread thread = new Thread(() -> {
+            String receivedString = null;
 
             // TCP发送到公网IP地址的服务器
-            try {
-                // 发送
-                message.append(stdNoTxtField.getText()).append("\n").append(localMac).append("\n").append(routerMac);
-                Socket socket = new Socket(IPTxtField.getText(), 60076);
-                OutputStream outputStream = socket.getOutputStream();
-                PrintWriter printWriter = new PrintWriter(outputStream);
-                printWriter.write(message.toString());
-                printWriter.flush();
-                socket.shutdownOutput();
-
-                // 接收
-                InputStream inputStream = socket.getInputStream();
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-                receivedString = bufferedReader.readLine();
-
-                // 关闭连接
-                bufferedReader.close();
-                inputStream.close();
-                printWriter.close();
-                outputStream.close();
-                socket.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-                alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("Error");
-                alert.setHeaderText(null);
-                alert.setContentText("Cannot connect to the server, please check your network or the Dedicated Server IP");
-                alert.showAndWait();
-            }
-        } else {
-            // UDP 广播寻找同一路由下的服务器
-            try {
-                // 得到广播地址
-                String broadCastIP = null;
-                Enumeration<?> netInterfaces = NetworkInterface.getNetworkInterfaces();
-                while (netInterfaces.hasMoreElements()) {
-                    NetworkInterface netInterface = (NetworkInterface) netInterfaces.nextElement();
-                    if (!netInterface.isLoopback() && netInterface.isUp()) {
-                        List<InterfaceAddress> interfaceAddresses = netInterface.getInterfaceAddresses();
-                        for (InterfaceAddress interfaceAddress : interfaceAddresses)
-                            //只有 IPv4 网络具有广播地址，因此对于 IPv6 网络将返回 null。
-                            if (interfaceAddress.getBroadcast() != null)
-                                broadCastIP = interfaceAddress.getBroadcast().getHostAddress();
-                    }
+            if (dedicatedModeRadioBtn.isSelected()) {
+                try {
+                    Platform.runLater(() -> {
+                        progressIndicator.setVisible(true);
+                        progressIndicator.setProgress(-1);
+                    });
+                    receivedString = sendTCP(IPTxtField.getText(), serverPort, stdNoTxtField.getText() + "\n" + localMac + "\n" + routerMac);
+                } catch (IOException e) {
+                    Platform.runLater(() -> {
+                        showSimpleAlert(Alert.AlertType.ERROR, "Error", "Cannot connect to the server, please check your network or the Dedicated Server IP");
+                        progressIndicator.setVisible(false);
+                        checkInBtn.setDisable(false);
+                        localModeRadioBtn.setDisable(false);
+                        dedicatedModeRadioBtn.setDisable(false);
+                        IPTxtField.setDisable(false);
+                        stdNoTxtField.setDisable(false);
+                    });
                 }
+            }
 
-                // 发送
-                message.append(stdNoTxtField.getText()).append("\n").append(localMac);
-                DatagramSocket socket = new DatagramSocket();
-                socket.setSoTimeout(1000);
-                DatagramPacket packet = new DatagramPacket(message.toString().getBytes(), message.length(), InetAddress.getByName(broadCastIP), 60076);
-                socket.send(packet);
+            // UDP 广播寻找同一路由下的服务器
+            if (localModeRadioBtn.isSelected()) {
+                try {
+                    Platform.runLater(() -> {
+                        progressIndicator.setVisible(true);
+                        progressIndicator.setProgress(-1);
+                    });
+                    receivedString = sendUDP(getbroadCastIP(), serverPort, stdNoTxtField.getText() + "\n" + localMac);
+                } catch (IOException e) {
+                    Platform.runLater(() -> {
+                        showSimpleAlert(Alert.AlertType.ERROR, "Error", "Cannot connect to the server, please check your network");
+                        progressIndicator.setVisible(false);
+                        checkInBtn.setDisable(false);
+                        localModeRadioBtn.setDisable(false);
+                        dedicatedModeRadioBtn.setDisable(false);
+                        IPTxtField.setDisable(false);
+                        stdNoTxtField.setDisable(false);
+                    });
+                }
+            }
 
-                // 接收
-                byte[] receivedByte = new byte[1024];
-                DatagramPacket receivedPacket = new DatagramPacket(receivedByte, receivedByte.length);
-                socket.receive(receivedPacket);
+            if (receivedString != null)
+                if (receivedString.equals("0"))
+                    Platform.runLater(() -> {
+                        showSimpleAlert(Alert.AlertType.INFORMATION, "Success", "Check-in Successfully");
+                        progressIndicator.setProgress(1);
+                        progressIndicator.setPrefWidth(36);
+                        progressIndicator.setPrefHeight(36);
+                    });
+                else if (receivedString.equals("1"))
+                    Platform.runLater(() -> {
+                        showSimpleAlert(Alert.AlertType.WARNING, "Failure", "Fail to Check-in, please check your Student No.");
+                        progressIndicator.setVisible(false);
+                        checkInBtn.setDisable(false);
+                        localModeRadioBtn.setDisable(false);
+                        dedicatedModeRadioBtn.setDisable(false);
+                        IPTxtField.setDisable(false);
+                        stdNoTxtField.setDisable(false);
+                    });
+        });
+        thread.start();
+    }
 
-                receivedString = new String(receivedPacket.getData(), 0, receivedPacket.getLength());
+    // 利用TCP协议发送并接收信息
+    private String sendTCP(String ip, int port, String message) throws IOException {
+        // 发送
+        Socket socket = new Socket(ip, port);
+        OutputStream outputStream = socket.getOutputStream();
+        PrintWriter printWriter = new PrintWriter(outputStream);
+        printWriter.write(message);
+        printWriter.flush();
+        socket.shutdownOutput();
 
-                // 关闭连接
-                socket.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-                alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("Error");
-                alert.setHeaderText(null);
-                alert.setContentText("Cannot connect to the server, please check your network");
-                alert.showAndWait();
+        // 接收
+        InputStream inputStream = socket.getInputStream();
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+        String receivedString = bufferedReader.readLine();
+
+        // 关闭连接
+        bufferedReader.close();
+        inputStream.close();
+        printWriter.close();
+        outputStream.close();
+        socket.close();
+
+        return receivedString;
+    }
+
+    // 利用UDP协议发送并接收信息
+    private String sendUDP(String ip, int port, String message) throws IOException {
+        // 发送
+        DatagramSocket socket = new DatagramSocket();
+        socket.setSoTimeout(1000);
+        DatagramPacket packet = new DatagramPacket(message.getBytes(), message.length(), InetAddress.getByName(ip), port);
+        socket.send(packet);
+
+        // 接收
+        byte[] receivedByte = new byte[1024];
+        DatagramPacket receivedPacket = new DatagramPacket(receivedByte, receivedByte.length);
+        socket.receive(receivedPacket);
+
+        String receivedString = new String(receivedPacket.getData(), 0, receivedPacket.getLength());
+
+        // 关闭连接
+        socket.close();
+
+        return receivedString;
+    }
+
+    // 得到广播地址
+    private String getbroadCastIP() throws SocketException {
+        String broadCastIP = null;
+        Enumeration<?> netInterfaces = NetworkInterface.getNetworkInterfaces();
+        while (netInterfaces.hasMoreElements()) {
+            NetworkInterface netInterface = (NetworkInterface) netInterfaces.nextElement();
+            if (!netInterface.isLoopback() && netInterface.isUp()) {
+                List<InterfaceAddress> interfaceAddresses = netInterface.getInterfaceAddresses();
+                for (InterfaceAddress interfaceAddress : interfaceAddresses)
+                    //只有 IPv4 网络具有广播地址，因此对于 IPv6 网络将返回 null。
+                    if (interfaceAddress.getBroadcast() != null)
+                        broadCastIP = interfaceAddress.getBroadcast().getHostAddress();
             }
         }
 
-        if (receivedString != null) {
-            if (receivedString.equals("0")) {
-                alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Success");
-                alert.setHeaderText(null);
-                alert.setContentText("Check-in Successfully");
-                alert.showAndWait();
-            } else if (receivedString.equals("1")) {
-                alert = new Alert(Alert.AlertType.WARNING);
-                alert.setTitle("Failure");
-                alert.setHeaderText(null);
-                alert.setContentText("Fail to Check-in, please check your Student No.");
-                alert.showAndWait();
-            }
-        }
+        return broadCastIP;
     }
 
     // 得到本机MAC的地址
@@ -257,6 +301,15 @@ public class Controller {
             e.printStackTrace();
         }
         return result.toString();
+    }
+
+    // 弹出对话框
+    private void showSimpleAlert(Alert.AlertType alertType, String title, String content) {
+        Alert alert = new Alert(alertType);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
     }
 
 }
