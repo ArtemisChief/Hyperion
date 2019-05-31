@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 
 public class Controller {
 
-    private final int serverPort = 60076;
+    private final int serverPort = 20076;
 
     private String localMac;
     private String routerMac;
@@ -139,30 +139,41 @@ public class Controller {
                         checkInBtn.setDisable(false);
                         localModeRadioBtn.setDisable(false);
                         dedicatedModeRadioBtn.setDisable(false);
-                        IPTxtField.setDisable(false);
                         stdNoTxtField.setDisable(false);
                     });
                 }
             }
 
-            if (receivedString != null)
-                if (receivedString.equals("0"))
-                    Platform.runLater(() -> {
-                        showSimpleAlert(Alert.AlertType.INFORMATION, "Success", "Check-in Successfully");
-                        progressIndicator.setProgress(1);
-                        progressIndicator.setPrefWidth(36);
-                        progressIndicator.setPrefHeight(36);
-                    });
-                else if (receivedString.equals("1"))
-                    Platform.runLater(() -> {
-                        showSimpleAlert(Alert.AlertType.WARNING, "Failure", "Fail to Check-in, please check your Student No.");
-                        progressIndicator.setVisible(false);
-                        checkInBtn.setDisable(false);
-                        localModeRadioBtn.setDisable(false);
-                        dedicatedModeRadioBtn.setDisable(false);
-                        IPTxtField.setDisable(false);
-                        stdNoTxtField.setDisable(false);
-                    });
+            if (receivedString != null) {
+                int type = Integer.parseInt(receivedString);
+                Platform.runLater(() -> {
+                    switch (type) {
+                        case 0:
+                            showSimpleAlert(Alert.AlertType.INFORMATION, "Success", "Check-in Successfully");
+                            progressIndicator.setProgress(1);
+                            progressIndicator.setPrefWidth(36);
+                            progressIndicator.setPrefHeight(36);
+                            break;
+                        case 1:
+                            showSimpleAlert(Alert.AlertType.WARNING, "Failure", "Fail to Check-in, please check your Student No.");
+                            progressIndicator.setVisible(false);
+                            checkInBtn.setDisable(false);
+                            localModeRadioBtn.setDisable(false);
+                            dedicatedModeRadioBtn.setDisable(false);
+                            IPTxtField.setDisable(false);
+                            stdNoTxtField.setDisable(false);
+                            break;
+                        case 2:
+                            showSimpleAlert(Alert.AlertType.INFORMATION, "Success", "You have already checked-in or there isn't new round of check-in");
+                            progressIndicator.setProgress(1);
+                            progressIndicator.setPrefWidth(36);
+                            progressIndicator.setPrefHeight(36);
+                            break;
+                        default:
+                            break;
+                    }
+                });
+            }
         });
         thread.start();
     }
