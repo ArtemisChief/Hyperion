@@ -1,4 +1,4 @@
-package Hyperion;
+package Student;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.*;

@@ -1,5 +1,3 @@
-package Hyperion;
-
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -10,7 +8,7 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("StudentView.fxml"));
+        Parent root = FXMLLoader.load(getClass().getResource("Student/StudentView.fxml"));
         primaryStage.setTitle("Hyperion - Student");
         primaryStage.setScene(new Scene(root, 420, 160));
         primaryStage.show();
