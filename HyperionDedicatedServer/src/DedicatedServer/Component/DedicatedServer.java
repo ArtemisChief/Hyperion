@@ -5,7 +5,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ConnectionManager {
+public class DedicatedServer {
 
     private static final int serverPort = 20076;
 

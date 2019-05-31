@@ -1,9 +1,9 @@
-import DedicatedServer.Component.ConnectionManager;
+import DedicatedServer.Component.DedicatedServer;
 
 public class Main {
 
     public static void main(String[] args) {
-        ConnectionManager.Launch();
+        DedicatedServer.Launch();
     }
 
 }
