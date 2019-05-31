@@ -110,7 +110,7 @@ public class Controller {
                         progressIndicator.setVisible(true);
                         progressIndicator.setProgress(-1);
                     });
-                    receivedString = sendTCP(IPTxtField.getText(), serverPort, stdNoTxtField.getText() + "\n" + localMac + "\n" + routerMac);
+                    receivedString = sendTCP(IPTxtField.getText(), serverPort, "0" + stdNoTxtField.getText() + "\n" + localMac + "\n" + routerMac);
                 } catch (IOException e) {
                     Platform.runLater(() -> {
                         showSimpleAlert(Alert.AlertType.ERROR, "Error", "Cannot connect to the server, please check your network or the Dedicated Server IP");
@@ -155,20 +155,30 @@ public class Controller {
                             progressIndicator.setPrefHeight(36);
                             break;
                         case 1:
-                            showSimpleAlert(Alert.AlertType.WARNING, "Failure", "Fail to Check-in, please check your Student No.");
+                            showSimpleAlert(Alert.AlertType.ERROR, "Failure", "Fail to Check-in, please check your Student No.");
                             progressIndicator.setVisible(false);
                             checkInBtn.setDisable(false);
                             localModeRadioBtn.setDisable(false);
                             dedicatedModeRadioBtn.setDisable(false);
-                            IPTxtField.setDisable(false);
                             stdNoTxtField.setDisable(false);
+                            if (dedicatedModeRadioBtn.isSelected())
+                                IPTxtField.setDisable(false);
                             break;
                         case 2:
-                            showSimpleAlert(Alert.AlertType.INFORMATION, "Success", "You have already checked-in or there isn't new round of check-in");
+                            showSimpleAlert(Alert.AlertType.INFORMATION, "Success", "You have already checked-in");
                             progressIndicator.setProgress(1);
                             progressIndicator.setPrefWidth(36);
                             progressIndicator.setPrefHeight(36);
                             break;
+                        case 3:
+                            showSimpleAlert(Alert.AlertType.WARNING, "Waring", "The checked-in has closed or hasn't started");
+                            progressIndicator.setVisible(false);
+                            checkInBtn.setDisable(false);
+                            localModeRadioBtn.setDisable(false);
+                            dedicatedModeRadioBtn.setDisable(false);
+                            stdNoTxtField.setDisable(false);
+                            if (dedicatedModeRadioBtn.isSelected())
+                                IPTxtField.setDisable(false);
                         default:
                             break;
                     }
