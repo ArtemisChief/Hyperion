@@ -110,7 +110,7 @@ public class Controller {
                         progressIndicator.setVisible(true);
                         progressIndicator.setProgress(-1);
                     });
-                    receivedString = sendTCP(IPTxtField.getText(), serverPort, "0" + stdNoTxtField.getText() + "\n" + localMac + "\n" + routerMac);
+                    receivedString = sendTCP(IPTxtField.getText(), serverPort, "0\n" + stdNoTxtField.getText() + "\n" + localMac + "\n" + routerMac);
                 } catch (IOException e) {
                     Platform.runLater(() -> {
                         showSimpleAlert(Alert.AlertType.ERROR, "Error", "Cannot connect to the server, please check your network or the Dedicated Server IP");
