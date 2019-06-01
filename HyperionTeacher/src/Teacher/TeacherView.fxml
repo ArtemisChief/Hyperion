@@ -1,22 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.Pane?>
-<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Teacher.TeacherController">
    <children>
-      <Button layoutX="522.0" layoutY="11.0" mnemonicParsing="false" text="Connect" />
-      <ComboBox editable="true" layoutX="337.0" layoutY="45.0" prefHeight="23.0" prefWidth="137.0" promptText="Class to Check-In" />
-      <Slider layoutX="15.0" layoutY="40.0" majorTickUnit="1.0" max="20.0" minorTickCount="1" prefHeight="32.0" prefWidth="303.0" showTickLabels="true" snapToTicks="true" />
-      <TableView layoutX="14.0" layoutY="79.0" prefHeight="312.0" prefWidth="571.0">
+      <Button fx:id="connectBtn" disable="true" layoutX="522.0" layoutY="11.0" mnemonicParsing="false" text="Connect" />
+      <ComboBox fx:id="classComboBox" editable="true" layoutX="337.0" layoutY="45.0" prefHeight="23.0" prefWidth="137.0" promptText="Class to Check-In" />
+      <Slider fx:id="timesSlider" blockIncrement="1.0" layoutX="15.0" layoutY="40.0" majorTickUnit="1.0" max="20.0" minorTickCount="0" prefHeight="32.0" prefWidth="303.0" showTickLabels="true" snapToTicks="true" />
+      <TableView fx:id="tableView" layoutX="14.0" layoutY="79.0" prefHeight="312.0" prefWidth="571.0">
         <columns>
-          <TableColumn prefWidth="95.0" text="Student No." />
-          <TableColumn prefWidth="97.0" text="MAC Address" />
+          <TableColumn prefWidth="117.0" text="Student No." />
+          <TableColumn prefWidth="129.0" text="MAC Address" />
         </columns>
       </TableView>
-      <ToggleButton layoutX="488.0" layoutY="45.0" mnemonicParsing="false" text="Start Check-In" />
-      <TextField layoutX="337.0" layoutY="11.0" prefHeight="23.0" prefWidth="172.0" promptText="Dedicated Server IP" />
-      <RadioButton layoutX="14.0" layoutY="14.0" mnemonicParsing="false" text="Local Server Mode" />
-      <RadioButton layoutX="152.0" layoutY="14.0" mnemonicParsing="false" text="Dedicated Server Mode" />
+      <ToggleButton fx:id="toggleCheckInBtn" layoutX="488.0" layoutY="45.0" mnemonicParsing="false" onAction="#StartCheckIn" text="Start Check-In" />
+      <TextField fx:id="IPTxtField" disable="true" layoutX="337.0" layoutY="11.0" prefHeight="23.0" prefWidth="172.0" promptText="Dedicated Server IP" />
+      <RadioButton fx:id="localModeRadioBtn" layoutX="14.0" layoutY="14.0" mnemonicParsing="false" onAction="#switchMode" selected="true" text="Local Server Mode">
+         <toggleGroup>
+            <ToggleGroup fx:id="ServerMode" />
+         </toggleGroup></RadioButton>
+      <RadioButton fx:id="dedicatedModeRadioBtn" layoutX="152.0" layoutY="14.0" mnemonicParsing="false" onAction="#switchMode" text="Dedicated Server Mode" toggleGroup="$ServerMode" />
    </children>
 </Pane>
