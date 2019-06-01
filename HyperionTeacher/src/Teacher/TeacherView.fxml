@@ -1,8 +1,22 @@
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.layout.GridPane?>
+<?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<GridPane fx:controller="Teacher.TeacherController"
-          xmlns:fx="http://javafx.com/fxml" alignment="center" hgap="10" vgap="10">
-</GridPane>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.Pane?>
+<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <Button layoutX="522.0" layoutY="11.0" mnemonicParsing="false" text="Connect" />
+      <ComboBox editable="true" layoutX="337.0" layoutY="45.0" prefHeight="23.0" prefWidth="137.0" promptText="Class to Check-In" />
+      <Slider layoutX="15.0" layoutY="40.0" majorTickUnit="1.0" max="20.0" minorTickCount="1" prefHeight="32.0" prefWidth="303.0" showTickLabels="true" snapToTicks="true" />
+      <TableView layoutX="14.0" layoutY="79.0" prefHeight="312.0" prefWidth="571.0">
+        <columns>
+          <TableColumn prefWidth="95.0" text="Student No." />
+          <TableColumn prefWidth="97.0" text="MAC Address" />
+        </columns>
+      </TableView>
+      <ToggleButton layoutX="488.0" layoutY="45.0" mnemonicParsing="false" text="Start Check-In" />
+      <TextField layoutX="337.0" layoutY="11.0" prefHeight="23.0" prefWidth="172.0" promptText="Dedicated Server IP" />
+      <RadioButton layoutX="14.0" layoutY="14.0" mnemonicParsing="false" text="Local Server Mode" />
+      <RadioButton layoutX="152.0" layoutY="14.0" mnemonicParsing="false" text="Dedicated Server Mode" />
+   </children>
+</Pane>
