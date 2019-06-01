@@ -218,7 +218,7 @@ public class StudentController {
         // 发送
         DatagramSocket socket = new DatagramSocket();
         socket.setSoTimeout(1000);
-        DatagramPacket packet = new DatagramPacket(message.getBytes(), message.length(), InetAddress.getByName(ip), port);
+        DatagramPacket packet = new DatagramPacket(message.getBytes(), message.getBytes().length, InetAddress.getByName(ip), port);
         socket.send(packet);
 
         // 接收
