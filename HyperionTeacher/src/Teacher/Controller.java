@@ -1,8 +1,8 @@
 package Teacher;
 
-import LocalServer.Component.LocalServer;
-import LocalServer.Entity.Class;
-import LocalServer.Entity.Student;
+import Teacher.Entity.Class;
+import Teacher.Entity.Student;
+import Teacher.Server.LocalServer;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -15,7 +15,7 @@ import java.util.Arrays;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class TeacherController {
+public class Controller {
 
     @FXML
     private RadioButton localModeRadioBtn;
@@ -57,12 +57,12 @@ public class TeacherController {
     private TableColumn<Student, String> col9;
 
     private TableColumn[] tableColumns;
-    private ConcurrentHashMap<String, Class> classes;
+
+    public static ConcurrentHashMap<String, Class> classes =new ConcurrentHashMap<>();
 
     @FXML
     // 初始化
     protected void initialize() {
-        classes = new ConcurrentHashMap<>();
         tableColumns = new TableColumn[]{col1, col2, col3, col4, col5, col6, col7, col8, col9};
 
         stuIdCol.setCellValueFactory(new PropertyValueFactory<>("id"));

@@ -1,10 +1,9 @@
-package LocalServer.Component;
+package Teacher.Server;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class LocalServer {
@@ -15,7 +14,7 @@ public class LocalServer {
      * 1 - 已开启签到
      */
 
-    static AtomicInteger status = new AtomicInteger(0);
+    private static AtomicInteger status = new AtomicInteger(0);
 
     private static final int serverPort = 20076;
 
@@ -57,7 +56,7 @@ public class LocalServer {
 
                 String receivedString = new String(receivedDatagramPacket.getData(), 0, receivedDatagramPacket.getLength());
 
-                byte[] type = StudentController.Process(receivedString).getBytes();
+                byte[] type = ProcessContent(receivedString).getBytes();
                 DatagramPacket sentDatagramPacket = new DatagramPacket(type, type.length, receivedDatagramPacket.getAddress(), receivedDatagramPacket.getPort());
                 datagramSocket.send(sentDatagramPacket);
             } catch (IOException e) {
@@ -65,6 +64,19 @@ public class LocalServer {
             }
         });
         thread.start();
+    }
+
+    /**
+     * 返回结果
+     * 0 - 签到成功
+     * 1 - 签到失败，学号与MAC地址不匹配
+     * 2 - 重复签到
+     * 3 - 本轮签到已关闭
+     */
+
+    private static String ProcessContent(String content){
+        status.get();
+        return "0";
     }
 
 }

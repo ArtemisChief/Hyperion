@@ -1,4 +1,4 @@
-package LocalServer.Entity;
+package Teacher.Entity;
 
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
