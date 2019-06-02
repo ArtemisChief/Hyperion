@@ -34,8 +34,21 @@ public class Student {
         return checkVector;
     }
 
+    public void setId(String id) {
+        this.id = id;
+    }
+
     public void setMac(String mac) {
         this.mac = mac;
+    }
+
+    public String getIsChecked(int count) {
+        if (count > checkVector.size())
+            return "";
+        else if (!checkVector.get(count - 1).equals("\\"))
+            return "√";
+        else
+            return "×";
     }
 
 }

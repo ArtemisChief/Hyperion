@@ -15,6 +15,4 @@ class StudentController {
         return "0";
     }
 
-
-
 }
