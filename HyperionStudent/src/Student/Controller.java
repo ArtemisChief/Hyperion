@@ -165,7 +165,7 @@ public class Controller {
                                 IPTxtField.setDisable(false);
                             break;
                         case 2:
-                            showSimpleAlert(Alert.AlertType.INFORMATION, "Success", "You have already checked-in");
+                            showSimpleAlert(Alert.AlertType.WARNING, "Waring", "You have already checked-in");
                             progressIndicator.setProgress(1);
                             progressIndicator.setPrefWidth(36);
                             progressIndicator.setPrefHeight(36);
