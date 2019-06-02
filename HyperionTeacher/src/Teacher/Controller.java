@@ -2,7 +2,7 @@ package Teacher;
 
 import Teacher.Entity.Class;
 import Teacher.Entity.Student;
-import Teacher.Server.LocalServer;
+import Teacher.ServerClient.LocalServer;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -58,11 +58,11 @@ public class Controller {
 
     private TableColumn[] tableColumns;
 
-    public static ConcurrentHashMap<String, Class> classes =new ConcurrentHashMap<>();
-
     @FXML
     // 初始化
     protected void initialize() {
+        LocalServer.setTableView(tableView);
+
         tableColumns = new TableColumn[]{col1, col2, col3, col4, col5, col6, col7, col8, col9};
 
         stuIdCol.setCellValueFactory(new PropertyValueFactory<>("id"));
@@ -71,7 +71,6 @@ public class Controller {
 
         LocalServer.launch();
 
-        readCheckInData();
         fillComboBox();
     }
 
@@ -113,10 +112,29 @@ public class Controller {
     // 开启或关闭签到
     protected void StartCheckIn() {
         if (toggleCheckInBtn.isSelected()) {
+            if (classComboBox.getValue() == null || classComboBox.getValue().equals("")) {
+                showSimpleAlert(Alert.AlertType.WARNING, "Waring", "You need to choose a class to start check-in");
+                toggleCheckInBtn.setSelected(false);
+                return;
+            }
+
             toggleCheckInBtn.setText("Stop Check-In");
+            timesSlider.setDisable(true);
+            classComboBox.setDisable(true);
+
+            Class.CurrentClassId = classComboBox.getValue();
+            if (Class.GetCurrentClass() == null) {
+                Class.Classes.put(Class.CurrentClassId, new Class(Class.CurrentClassId, (int) timesSlider.getValue()));
+                fillComboBox();
+            }
+            else
+                Class.GetCurrentClass().setCheckInCount((int) timesSlider.getValue());
         } else {
             toggleCheckInBtn.setText("Start Check-In");
-            writeCheckInData();
+            timesSlider.setDisable(false);
+            classComboBox.setDisable(false);
+
+            Class.CurrentClassId = null;
         }
     }
 
@@ -128,9 +146,13 @@ public class Controller {
 
     @FXML
     // 填充签到表
-    private void fillTableView() {
-        ObservableList<Student> studentObservableList = FXCollections.observableArrayList(classes.get(classComboBox.getValue()).getStudents());
-        tableView.setItems(studentObservableList);
+    public void fillTableView() {
+        if (Class.Classes.get(classComboBox.getValue()) == null)
+            tableView.getItems().clear();
+        else {
+            ObservableList<Student> studentObservableList = FXCollections.observableArrayList(Class.Classes.get(classComboBox.getValue()).getStudentsInClass().values());
+            tableView.setItems(studentObservableList);
+        }
     }
 
     // 绑定签到次数列
@@ -149,83 +171,18 @@ public class Controller {
 
     // 填充班级下拉菜单
     private void fillComboBox() {
-        for (String classId : classes.keySet())
-            classComboBox.getItems().add(classId);
+        for (String classId : Class.Classes.keySet())
+            if (!classComboBox.getItems().contains(classId))
+                classComboBox.getItems().add(classId);
     }
 
-    // 读取签到表文件
-    private void readCheckInData() {
-        try {
-            File file = new File("HyperionData");
-
-            if (!file.exists())
-                return;
-
-            BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
-
-            String classId;
-            int checkInCount;
-            ConcurrentHashMap<String, Student> studentsInClass;
-
-            String studentInfo;
-            String studentId, studentMac;
-            Vector<String> checkVector;
-
-            while ((classId = reader.readLine()) != null) {
-                checkInCount = Integer.parseInt(reader.readLine());
-                studentsInClass = new ConcurrentHashMap<>();
-
-                while ((studentInfo = reader.readLine()) != null) {
-                    if (studentInfo.equals(""))
-                        break;
-
-                    String[] strings = studentInfo.split("\\s");
-
-                    studentId = strings[0];
-                    studentMac = strings[1];
-
-                    checkVector = new Vector<>(Arrays.asList(strings).subList(2, strings.length));
-
-                    Student student = new Student(studentId, studentMac, checkVector);
-                    studentsInClass.put(studentId, student);
-                }
-
-                Class theClass = new Class(classId, checkInCount, studentsInClass);
-                classes.put(classId, theClass);
-            }
-
-            reader.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    // 弹出对话框
+    private void showSimpleAlert(Alert.AlertType alertType, String title, String content) {
+        Alert alert = new Alert(alertType);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
     }
 
-    // 写入签到表文件
-    private void writeCheckInData() {
-        try {
-            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("HyperionData")));
-
-            StringBuilder content = new StringBuilder();
-
-            for (Class theClass : classes.values()) {
-                content.append(theClass.getId()).append("\n").append(theClass.getCheckInCount()).append("\n");
-
-                for (Student student : theClass.getStudents()) {
-                    content.append(student.getId()).append(" ").append(student.getMac());
-
-                    for (String checkIn : student.getCheckList())
-                        content.append(" ").append(checkIn);
-
-                    content.append("\n");
-                }
-                content.append("\n");
-            }
-
-            writer.write(content.toString());
-
-            writer.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 }

@@ -1,4 +1,4 @@
-package Teacher.Server;
+package Teacher.ServerClient;
 
 public class DedicatedServer {
 }

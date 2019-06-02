@@ -1,9 +1,14 @@
 package Teacher.Entity;
 
-import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class Class {
+
+    public static ConcurrentHashMap<String, Class> Classes =new ConcurrentHashMap<>();
+    public static String CurrentClassId;
+    public static Class GetCurrentClass() {
+        return Classes.get(CurrentClassId);
+    }
 
     private String id;
 
@@ -31,8 +36,8 @@ public class Class {
         return checkInCount;
     }
 
-    public Collection<Student> getStudents() {
-        return studentsInClass.values();
+    public ConcurrentHashMap<String, Student> getStudentsInClass() {
+        return studentsInClass;
     }
 
     public void setCheckInCount(int checkInCount) {

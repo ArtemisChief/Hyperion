@@ -42,6 +42,10 @@ public class Student {
         this.mac = mac;
     }
 
+    public void setCheckVector(Vector<String> checkVector) {
+        this.checkVector = checkVector;
+    }
+
     public String getIsChecked(int count) {
         if (count > checkVector.size())
             return "";
