@@ -8,7 +8,7 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("Student/StudentView.fxml"));
+        Parent root = FXMLLoader.load(getClass().getResource("Student/View.fxml"));
         primaryStage.setTitle("Hyperion - Student");
         primaryStage.setScene(new Scene(root, 410, 150));
         primaryStage.setResizable(false);

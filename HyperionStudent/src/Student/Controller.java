@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class StudentController {
+public class Controller {
 
     private final int serverPort = 20076;
 
