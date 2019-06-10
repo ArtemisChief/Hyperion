@@ -1,142 +1,96 @@
 package Teacher.ServerClient;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintStream;
-import java.net.ServerSocket;
-import java.net.Socket;
+import javafx.scene.control.TableView;
+
+import java.io.*;
+import java.net.*;
 
 
 public class DedicatedServer {
-	private static final int STU_PORT = 20076;
-	
-	private static final int PROF_PORT = 20077;
-	
-	private static final int THREAD_POOL_SIZE = 10;
-	
-	private static ServerSocket stu_ServerSocket;
-	
-	private static ServerSocket prof_ServerSocket;
-	
-	public static void launchServerPool() throws IOException{
-		prof_ServerSocket = new ServerSocket(PROF_PORT);
-		stu_ServerSocket = new ServerSocket(STU_PORT);
-		
-		Thread thread_prof = new Thread() {
-			public void run() {
-				try {
-					//等待教授客户端的连接
-					Socket prof = prof_ServerSocket.accept();
-					ProfTCPConnection.processMessage(prof);;
-				} catch (Exception e) {
-					// TODO: handle exception
-				}
-			}
-		};
-		thread_prof.start();
-		//学生端采取线程池的处理方式：池内线程数：10
-		for(int i = 0;i< THREAD_POOL_SIZE;i++) {
-			Thread thread_stu = new Thread(){
-                public void run(){
-                    while(true){
-                        try {
-                            //等待学生客户端的连接
-                            Socket student = stu_ServerSocket.accept();
-                            TCPConnection.processMessage(student);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }
-            };
-            thread_stu.start();
-		} 
-	}
-	
-	// 关闭服务器
-    public static void Close() throws IOException {
-        stu_ServerSocket.close();
-        prof_ServerSocket.close();
-    }
-	
-	
-}
 
-class ProfTCPConnection implements Runnable{
-	private static Socket ProfTCPSocket;
-	
-	
-	public ProfTCPConnection(Socket profTCPSocket) {
-		super();
-		ProfTCPSocket = profTCPSocket;
+	private String serverIP = "";
+	private static final int serverPort = 20076;
+
+	private static DatagramSocket datagramSocket;
+	private static TableView tableView;
+
+	// 得到Controller实例
+	public static void setTableView(TableView tv) {
+		tableView = tv;
 	}
 
-
-	public void run() {
-		processMessage(ProfTCPSocket);
-	}
-	
-	public static void processMessage(Socket tcpSocket) {
-		ProfTCPSocket = tcpSocket;
-		try {
-			PrintStream printStream = (PrintStream) ProfTCPSocket.getOutputStream();
-			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(ProfTCPSocket.getInputStream()));
-			String line = bufferedReader.readLine();
-			while(line!=null&&line!="") {
-				//TODO:implement the processing of prof message.
-				printStream.println("Hello prof, your message received.");
-				printStream.flush();
-				System.out.println("From prof:"+line);
-			}
-			printStream.close();
-            bufferedReader.close();
-            ProfTCPSocket.close();
-		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace();
+	//点击连接按钮，尝试和服务器连接
+	public String connectToServer(String serverIP){
+		this.serverIP = serverIP;
+		try{
+			String receiveString = sendTCP(serverIP, serverPort, "TryConnecting");
+			return receiveString;
+		}catch(Exception ex){
+			//Todo:异常显示
 		}
-		
-	}
-}
 
-class TCPConnection implements Runnable{
-	private static Socket TCPSocket;
-	
-	public TCPConnection(Socket tCPSocket) {
-		super();
-		TCPSocket = tCPSocket;
+		return "";
 	}
 
-//	public Socket getTCPSocket() {
-//		return TCPSocket;
+//	//点击开启签到按钮，向服务器发送开启签到请求，并保持监听
+//	// 开启服务器
+//	public static void launch() {
+//		//readCheckInData();
+//
+//		//Todo:向服务器发送开启签到信息
+//
+//
+//		//Todo:开启监听来自服务器的签到信息
+//		Thread thread = new Thread(() -> {
+//			try {
+//				datagramSocket = new DatagramSocket(serverPort);
+//				DatagramPacket receivedDatagramPacket;
+//
+//				System.out.println("Local server launched, port = " + serverPort + ", waiting for receive packet...");
+//
+//				while (true) {
+//					receivedDatagramPacket = new DatagramPacket(new byte[1024], 1024);
+//					datagramSocket.receive(receivedDatagramPacket);
+//					ProcessDatagramPacket(receivedDatagramPacket);
+//				}
+//			} catch (SocketException e) {
+//				writeCheckInData();
+//				System.out.println("Local server closed");
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			}
+//		});
+//		thread.start();
 //	}
-	@Override
-	public void run() {
-		processMessage(TCPSocket);
+//
+//	// 关闭服务器
+//	public static void Close() {
+//		datagramSocket.close();
+//	}
+
+
+	// 利用TCP协议发送并接收信息
+	private String sendTCP(String ip, int port, String message) throws IOException {
+		// 发送
+		Socket socket = new Socket(ip, port);
+		OutputStream outputStream = socket.getOutputStream();
+		PrintWriter printWriter = new PrintWriter(outputStream);
+		printWriter.write(message);
+		printWriter.flush();
+		socket.shutdownOutput();
+
+		// 接收
+		InputStream inputStream = socket.getInputStream();
+		BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+		String receivedString = bufferedReader.readLine();
+
+		// 关闭连接
+		bufferedReader.close();
+		inputStream.close();
+		printWriter.close();
+		outputStream.close();
+		socket.close();
+
+		return receivedString;
 	}
-	
-	public static void processMessage(Socket tcpSocket) {
-		TCPSocket = tcpSocket;
-		try {
-			PrintStream printStream = (PrintStream) TCPSocket.getOutputStream();
-			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(TCPSocket.getInputStream()));
-			String line = bufferedReader.readLine();
-			while(line!=null&&line!="") {
-				//TODO:implement the processing of student message.
-				printStream.println("Hello student, your message received.");
-				printStream.flush();
-				System.out.println("From student:"+line);
-			}
-			printStream.close();
-            bufferedReader.close();
-            TCPSocket.close();
-		} catch (Exception e) {
-			// TODO: handle exception
-			e.printStackTrace();
-		}
-		
-	}
-	
 }

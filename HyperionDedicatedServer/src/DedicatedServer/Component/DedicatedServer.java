@@ -7,60 +7,55 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class DedicatedServer {
 
-    private static final int serverPort = 20076;
+    private static final int STU_PORT = 20076;
 
-    private static AtomicInteger count = new AtomicInteger(0);
+    private static final int PROF_PORT = 20077;
 
-    // 启动服务器
-    public static void Launch() {
-        try {
-            ServerSocket serverSocket = new ServerSocket(serverPort);
-            Socket socket;
-            System.out.println("Dedicated server launched, port = " + serverPort + ", waiting for connecting...");
+    private static final int THREAD_POOL_SIZE = 10;
 
-            while (true) {
-                socket = serverSocket.accept();
-                ProcessConnection(socket);
+    private static ServerSocket stu_ServerSocket;
+
+    private static ServerSocket prof_ServerSocket;
+
+    public static void launchServerPool() throws IOException{
+        prof_ServerSocket = new ServerSocket(PROF_PORT);
+        stu_ServerSocket = new ServerSocket(STU_PORT);
+
+        Thread thread_prof = new Thread() {
+            public void run() {
+                try {
+                    //等待教授客户端的连接
+                    Socket prof = prof_ServerSocket.accept();
+                    TeacherController.processMessage(prof);
+                } catch (Exception e) {
+                    // TODO: handle exception
+                }
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        };
+        thread_prof.start();
+        //学生端采取线程池的处理方式：池内线程数：10
+        for(int i = 0;i< THREAD_POOL_SIZE;i++) {
+            Thread thread_stu = new Thread(){
+                public void run(){
+                    while(true){
+                        try {
+                            //等待学生客户端的连接
+                            Socket student = stu_ServerSocket.accept();
+                            StudentController.processMessage(student);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            };
+            thread_stu.start();
         }
     }
 
-    // 处理连接
-    private static void ProcessConnection(Socket socket) {
-        Thread thread = new Thread(() -> {
-            String ip = socket.getInetAddress().getHostAddress();
-            System.out.println("Connection Count: " + count.incrementAndGet() + ", Connected from " + ip);
-
-            try {
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-                int type = Integer.parseInt(bufferedReader.readLine());
-
-                StringBuilder content = new StringBuilder();
-                String line;
-                while ((line = bufferedReader.readLine()) != null)
-                    content.append(line);
-
-                switch (type) {
-                    case 0:
-                        StudentController.Process(content.toString());
-                        break;
-                    case 1:
-                        TeacherController.Process(content.toString());
-                        break;
-                    default:
-                        break;
-                }
-
-                socket.close();
-                System.out.println("Connection Count: " + count.decrementAndGet() + ", Disconnected from " + ip);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-        thread.start();
+    // 关闭服务器
+    public static void Close() throws IOException {
+        stu_ServerSocket.close();
+        prof_ServerSocket.close();
     }
 
 }

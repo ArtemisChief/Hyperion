@@ -1,26 +1,31 @@
 package DedicatedServer.Entity;
 
-import java.util.HashMap;
-import java.util.LinkedHashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Class {
+
+    public static ConcurrentHashMap<String, Class> Classes =new ConcurrentHashMap<>();
+    public static String CurrentClassId;
+    public static Class GetCurrentClass() {
+        return Classes.get(CurrentClassId);
+    }
 
     private String id;
 
     private int checkInCount;
 
-    private HashMap<String, Student> studentHashMap;
+    private ConcurrentHashMap<String, Student> studentsInClass;
 
     public Class(String id, int checkInCount) {
         this.id = id;
         this.checkInCount = checkInCount;
-        this.studentHashMap = new LinkedHashMap<>();
+        this.studentsInClass = new ConcurrentHashMap<>();
     }
 
-    public Class(String id, int checkInCount, HashMap<String, Student> studentList) {
+    public Class(String id, int checkInCount, ConcurrentHashMap<String, Student> studentsInClass) {
         this.id = id;
         this.checkInCount = checkInCount;
-        this.studentHashMap = studentList;
+        this.studentsInClass = studentsInClass;
     }
 
     public String getId() {
@@ -31,8 +36,8 @@ public class Class {
         return checkInCount;
     }
 
-    public HashMap<String, Student> getStudentList() {
-        return studentHashMap;
+    public ConcurrentHashMap<String, Student> getStudentsInClass() {
+        return studentsInClass;
     }
 
     public void setCheckInCount(int checkInCount) {

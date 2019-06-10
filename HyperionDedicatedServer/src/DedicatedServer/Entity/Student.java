@@ -1,7 +1,6 @@
 package DedicatedServer.Entity;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Vector;
 
 public class Student {
 
@@ -9,18 +8,18 @@ public class Student {
 
     private String mac;
 
-    private List<Integer> checkList;
+    private Vector<String> checkVector;
 
     public Student(String id, String mac) {
         this.id = id;
         this.mac = mac;
-        this.checkList = new ArrayList<>();
+        this.checkVector = new Vector<>();
     }
 
-    public Student(String id, String mac, List<Integer> checkList) {
+    public Student(String id, String mac, Vector<String> checkVector) {
         this.id = id;
         this.mac = mac;
-        this.checkList = checkList;
+        this.checkVector = checkVector;
     }
 
     public String getId() {
@@ -31,12 +30,29 @@ public class Student {
         return mac;
     }
 
-    public List<Integer> getCheckList() {
-        return checkList;
+    public Vector<String> getCheckList() {
+        return checkVector;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public void setMac(String mac) {
         this.mac = mac;
+    }
+
+    public void setCheckVector(Vector<String> checkVector) {
+        this.checkVector = checkVector;
+    }
+
+    public String getIsChecked(int count) {
+        if (count > checkVector.size())
+            return "";
+        else if (!checkVector.get(count - 1).equals("\\"))
+            return "√";
+        else
+            return "×";
     }
 
 }

@@ -12,8 +12,6 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 
 import java.io.*;
-import java.net.Socket;
-import java.net.UnknownHostException;
 import java.util.Arrays;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
@@ -60,14 +58,12 @@ public class Controller {
     private TableColumn<Student, String> col9;
 
     private TableColumn[] tableColumns;
-        
-    private final int SERVER_PORT = 20077;
 
-    private Socket tcpSocket;
     @FXML
     // 初始化
     protected void initialize() {
         LocalServer.setTableView(tableView);
+        DedicatedServer.setTableView(tableView);
 
         tableColumns = new TableColumn[]{col1, col2, col3, col4, col5, col6, col7, col8, col9};
 
@@ -86,23 +82,11 @@ public class Controller {
         if (dedicatedModeRadioBtn.isSelected()) {
             IPTxtField.setDisable(false);
             connectBtn.setDisable(false);
-            try {
-            	LocalServer.Close();
-                DedicatedServer.launchServerPool();
-			} catch (Exception e) {
-				// do nothing. huh
-			}
-            
+            LocalServer.Close();
         } else {
             IPTxtField.setDisable(true);
             connectBtn.setDisable(true);
-            try {
-            	LocalServer.launch();
-            	DedicatedServer.Close();
-			} catch (Exception e) {
-				// do nothing
-			}
-            
+            LocalServer.launch();
         }
     }
 
@@ -159,15 +143,7 @@ public class Controller {
     @FXML
     // 公网模式连接到服务器
     protected void connectToDedicatedServer() {
-    	try {
-			tcpSocket = new Socket(IPTxtField.getText(),SERVER_PORT);
-		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
-			System.out.println("Unaccessible Host!");
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+
     }
 
     @FXML
