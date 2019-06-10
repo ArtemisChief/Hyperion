@@ -108,7 +108,7 @@ public class LocalServer {
 
             if (student == null) {
                 // 学生第一次参与这个班级签到，但是MAC地址已经被其他学号的用过了，企图代签
-                for (Student stu : Class.GetCurrentClass().getStudentsInClass().values())
+            	for (Student stu : Class.GetCurrentClass().getStudentsInClass().values())
                     if (mac.equals(stu.getMac()))
                         return "1";
 
@@ -184,6 +184,7 @@ public class LocalServer {
                     Student student = new Student(studentId, studentMac, checkVector);
                     studentsInClass.put(studentId, student);
                 }
+                
 
                 Class theClass = new Class(classId, checkInCount, studentsInClass);
                 Class.Classes.put(classId, theClass);
