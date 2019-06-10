@@ -10,8 +10,8 @@ public class DedicatedServer {
 
 	private String serverIP = "";
 	private static final int serverPort = 20076;
+	private Socket socket;
 
-	private static DatagramSocket datagramSocket;
 	private static TableView tableView;
 
 	// 得到Controller实例
@@ -19,54 +19,64 @@ public class DedicatedServer {
 		tableView = tv;
 	}
 
+	/**
+	 * 所有服务器返回第一个数字的结果
+	 * 0 - 连接成功
+	 * 1 - 签到已开启
+	 * 2 - 收到新的签到信息
+	 * 3 - 签到结束
+	 * 4 - 连接即将断开
+	 *
+	 * 所有向服务器发送的信息，第一个数字含义
+	 * 0 - 尝试连接
+	 * 1 - 开启签到
+	 * 2 - 关闭签到
+	 * 3 - 断开连接
+	 */
+
 	//点击连接按钮，尝试和服务器连接
 	public String connectToServer(String serverIP){
+		if(serverIP == null)
+			return "Please Input Server IP!";
+
 		this.serverIP = serverIP;
 		try{
-			String receiveString = sendTCP(serverIP, serverPort, "TryConnecting");
-			return receiveString;
+			// 发送
+			socket = new Socket(serverIP, serverPort);
+			OutputStream outputStream = socket.getOutputStream();
+			PrintWriter printWriter = new PrintWriter(outputStream);
+			printWriter.write("0\n");
+			printWriter.flush();
+
+			// 接收
+			InputStream inputStream = socket.getInputStream();
+			BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+			String receivedString = bufferedReader.readLine();
+
+			if(receivedString.substring(0,1).equals("0"))
+				return "Connected!";
+
 		}catch(Exception ex){
-			//Todo:异常显示
+			//Todo:返回异常信息
 		}
 
-		return "";
+		return "Connection Failed!";
 	}
 
-//	//点击开启签到按钮，向服务器发送开启签到请求，并保持监听
-//	// 开启服务器
-//	public static void launch() {
-//		//readCheckInData();
-//
-//		//Todo:向服务器发送开启签到信息
-//
-//
-//		//Todo:开启监听来自服务器的签到信息
-//		Thread thread = new Thread(() -> {
-//			try {
-//				datagramSocket = new DatagramSocket(serverPort);
-//				DatagramPacket receivedDatagramPacket;
-//
-//				System.out.println("Local server launched, port = " + serverPort + ", waiting for receive packet...");
-//
-//				while (true) {
-//					receivedDatagramPacket = new DatagramPacket(new byte[1024], 1024);
-//					datagramSocket.receive(receivedDatagramPacket);
-//					ProcessDatagramPacket(receivedDatagramPacket);
-//				}
-//			} catch (SocketException e) {
-//				writeCheckInData();
-//				System.out.println("Local server closed");
-//			} catch (IOException e) {
-//				e.printStackTrace();
-//			}
-//		});
-//		thread.start();
-//	}
-//
-//	// 关闭服务器
-//	public static void Close() {
-//		datagramSocket.close();
-//	}
+	// 开启签到，保持监听
+	public static void startCheckIn(){
+		//Todo：
+//		OutputStream outputStream = socket.getOutputStream();
+//		PrintWriter printWriter = new PrintWriter(outputStream);
+//		printWriter.write("0\n");
+//		printWriter.flush();
+	}
+
+	// 关闭服务器
+	public static void Close() {
+		//Todo：
+		//datagramSocket.close();
+	}
 
 
 	// 利用TCP协议发送并接收信息
