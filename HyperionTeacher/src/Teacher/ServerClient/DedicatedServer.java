@@ -10,7 +10,7 @@ public class DedicatedServer {
 
 	private String serverIP = "";
 	private static final int serverPort = 20076;
-	private Socket socket;
+	private Socket socket = null;
 
 	private static TableView tableView;
 
@@ -23,15 +23,13 @@ public class DedicatedServer {
 	 * 所有服务器返回第一个数字的结果
 	 * 0 - 连接成功
 	 * 1 - 签到已开启
-	 * 2 - 收到新的签到信息
+	 * 2 - 收到新的签到信息（后接具体信息）
 	 * 3 - 签到结束
-	 * 4 - 连接即将断开
 	 *
 	 * 所有向服务器发送的信息，第一个数字含义
 	 * 0 - 尝试连接
-	 * 1 - 开启签到
+	 * 1 - 开启签到（后接开启签到班级信息）
 	 * 2 - 关闭签到
-	 * 3 - 断开连接
 	 */
 
 	//点击连接按钮，尝试和服务器连接
@@ -64,18 +62,42 @@ public class DedicatedServer {
 	}
 
 	// 开启签到，保持监听
-	public static void startCheckIn(){
-		//Todo：
-//		OutputStream outputStream = socket.getOutputStream();
-//		PrintWriter printWriter = new PrintWriter(outputStream);
-//		printWriter.write("0\n");
-//		printWriter.flush();
-	}
+	public void startCheckIn(){
+		if(socket == null)
+			return;
+
+		Thread thread = new Thread(() -> {
+			try{
+				OutputStream outputStream = socket.getOutputStream();
+				PrintWriter printWriter = new PrintWriter(outputStream);
+				//Todo：获取班级、MAC信息
+				printWriter.write("1\n" + "班级");
+				printWriter.flush();
+
+				while(true){
+					// 接收
+					InputStream inputStream = socket.getInputStream();
+					BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+					String receivedString = bufferedReader.readLine();
+					if(receivedString.substring(0,1).equals("2")){
+						//Todo:处理信息，将新的签到信息保存、展示
+					}
+				}
+			}catch (Exception ex){
+
+			}
+		});
+		thread.start();
+}
 
 	// 关闭服务器
-	public static void Close() {
-		//Todo：
-		//datagramSocket.close();
+	public void Close() {
+		try{
+			socket.close();
+		}catch (Exception ex){
+			//Todo:处理异常
+		}
+
 	}
 
 

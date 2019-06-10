@@ -26,13 +26,11 @@ class TeacherController {
      * 1 - 签到已开启
      * 2 - 收到新的签到信息
      * 3 - 签到结束
-     * 4 - 连接即将断开
      *
      * 来自教师端信息的第一个数字含义
      * 0 - 尝试连接
      * 1 - 开启签到
      * 2 - 关闭签到
-     * 3 - 断开连接
      */
     public static void processMessage(Socket tcpSocket) {
         ProfTCPSocket = tcpSocket;
