@@ -38,16 +38,16 @@ class TeacherController {
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(ProfTCPSocket.getInputStream()));
                 String line = bufferedReader.readLine();
 
-                String message = "";
+                String content = "";
                 while(line!=null&&line!="") {
-                    message += line;
+                    content += line + "\n";
 
                     printStream.println("Hello prof, your message received.");
                     printStream.flush();
                     System.out.println("From prof:"+line);
                 }
                 //TODO:处理结果已返回到result，需要显示在某处的话
-                String result = ProcessContent(message, ProfTCPSocket);
+                String result = ProcessContent(content);
 
                 printStream.close();
                 bufferedReader.close();
@@ -61,7 +61,7 @@ class TeacherController {
 
     }
 
-    private static String ProcessContent(String content, Socket socket){
+    private static String ProcessContent(String content){
 
         if(content.substring(0,1).equals("0")){
             //服务器开启该班级签到
@@ -78,15 +78,26 @@ class TeacherController {
             DedicatedServer.currentMAC = null;
 
             //向教师端回复确认结束信息
-            OutputStream outputStream = socket.getOutputStream();
-            PrintWriter printWriter = new PrintWriter(outputStream);
-            printWriter.write(".");
-            printWriter.flush();
+            sendToTeacher(".");
+
 
             return "CheckIn Ended!\n";
         }
 
         return "Invalid Request! Request = \" " + content.replace("\n","\\n") + " \" ";
+    }
+
+    //使用当前的Socket向教师发送信息
+    public static void sendToTeacher(String message){
+        try{
+            OutputStream outputStream = ProfTCPSocket.getOutputStream();
+            PrintWriter printWriter = new PrintWriter(outputStream);
+            printWriter.write(message);
+            printWriter.flush();
+
+        }catch (Exception ex){
+            //Todo:处理异常
+        }
     }
 
 }
