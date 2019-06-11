@@ -5,10 +5,10 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.Pane?>
 
-<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Teacher.Controller">
+<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Teacher.Component.Controller">
    <children>
-      <Button fx:id="connectBtn" disable="true" layoutX="522.0" layoutY="11.0" mnemonicParsing="false" text="Connect" />
-      <ComboBox fx:id="classComboBox" editable="true" layoutX="337.0" layoutY="45.0" onAction="#fillTableView" prefHeight="23.0" prefWidth="137.0" promptText="Class to Check-In" />
+      <Button fx:id="connectBtn" disable="true" layoutX="488.0" layoutY="11.0" mnemonicParsing="false" onAction="#connectToDedicatedServer" prefHeight="23.0" prefWidth="98.0" text="Connect" />
+      <ComboBox fx:id="classComboBox" editable="true" layoutX="337.0" layoutY="45.0" onHiding="#fillTableView" prefHeight="23.0" prefWidth="137.0" promptText="Class to Check-In" />
       <Slider fx:id="timesSlider" blockIncrement="1.0" layoutX="15.0" layoutY="40.0" majorTickUnit="1.0" max="20.0" min="1.0" minorTickCount="0" onMouseReleased="#setCurrentCheckInCount" prefHeight="32.0" prefWidth="303.0" showTickLabels="true" snapToTicks="true" />
       <TableView fx:id="tableView" layoutX="14.0" layoutY="79.0" prefHeight="312.0" prefWidth="571.0">
         <columns>
@@ -26,7 +26,7 @@
         </columns>
       </TableView>
       <ToggleButton fx:id="toggleCheckInBtn" layoutX="488.0" layoutY="45.0" mnemonicParsing="false" onAction="#StartCheckIn" text="Start Check-In" />
-      <TextField fx:id="IPTxtField" disable="true" layoutX="337.0" layoutY="11.0" prefHeight="23.0" prefWidth="172.0" promptText="Dedicated Server IP" />
+      <TextField fx:id="IPTxtField" disable="true" layoutX="337.0" layoutY="11.0" prefHeight="23.0" prefWidth="137.0" promptText="Dedicated Server IP" />
       <RadioButton fx:id="localModeRadioBtn" layoutX="14.0" layoutY="14.0" mnemonicParsing="false" onAction="#switchMode" selected="true" text="Local Server Mode">
          <toggleGroup>
             <ToggleGroup fx:id="ServerMode" />

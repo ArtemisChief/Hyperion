@@ -1,5 +1,6 @@
 package Teacher.ServerClient;
 
+import Teacher.Component.CheckInManager;
 import Teacher.Entity.Class;
 import Teacher.Entity.Student;
 import javafx.scene.control.TableView;
@@ -8,10 +9,6 @@ import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.SocketException;
-import java.util.Arrays;
-import java.util.Vector;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class LocalServer {
 
@@ -21,21 +18,35 @@ public class LocalServer {
      * 1 - 已开启签到
      */
 
-    private static AtomicInteger status = new AtomicInteger(0);
+    // 单例
+    private static LocalServer ourInstance = new LocalServer();
 
+    // 得到单例
+    public static LocalServer getInstance() {
+        return ourInstance;
+    }
+
+    // 服务器端口号
     private static final int serverPort = 20076;
 
-    private static DatagramSocket datagramSocket;
+    // UDP数据报Socket
+    private DatagramSocket datagramSocket;
 
-    private static TableView tableView;
+    // 表格
+    private TableView tableView;
+
+    private LocalServer() {
+        datagramSocket = null;
+        tableView = null;
+    }
 
     // 得到Controller实例
-    public static void setTableView(TableView tv) {
-        tableView = tv;
+    public void setTableView(TableView tableView) {
+        this.tableView = tableView;
     }
 
     // 开启服务器
-    public static void launch() {
+    public void launch() {
         readCheckInData();
 
         Thread thread = new Thread(() -> {
@@ -61,19 +72,19 @@ public class LocalServer {
     }
 
     // 关闭服务器
-    public static void Close() {
+    public void Close() {
         datagramSocket.close();
     }
 
-    // 处理连接
-    private static void ProcessDatagramPacket(DatagramPacket receivedDatagramPacket) {
+    // 处理数据包
+    private void ProcessDatagramPacket(DatagramPacket receivedDatagramPacket) {
         Thread thread = new Thread(() -> {
             try {
                 System.out.println("Received from " + receivedDatagramPacket.getAddress().getHostAddress());
 
                 String receivedString = new String(receivedDatagramPacket.getData(), 0, receivedDatagramPacket.getLength());
 
-                byte[] type = ProcessContent(receivedString).getBytes();
+                byte[] type = processContent(receivedString).getBytes();
                 DatagramPacket sentDatagramPacket = new DatagramPacket(type, type.length, receivedDatagramPacket.getAddress(), receivedDatagramPacket.getPort());
                 datagramSocket.send(sentDatagramPacket);
             } catch (IOException e) {
@@ -91,24 +102,25 @@ public class LocalServer {
      * 3 - 本轮签到已关闭
      */
 
-    private static String ProcessContent(String content) {
-        status.get();
-
+    // 处理签到内容
+    private String processContent(String content) {
         String id = content.substring(0, content.indexOf("\n"));
         String mac = content.substring(content.indexOf("\n") + 1);
 
-        if (Class.CurrentClassId == null)
+        Class currentClass=CheckInManager.getInstance().getCurrentClass();
+
+        if (currentClass == null)
             // 当前签到的班级为空，未开启签到
             return "3";
         else {
-            int count = Class.GetCurrentClass().getCheckInCount();
+            int count = currentClass.getCheckInCount();
             String countStr = Integer.toString(count);
 
-            Student student = Class.GetCurrentClass().getStudentsInClass().get(id);
+            Student student = currentClass.getStudentsInClass().get(id);
 
             if (student == null) {
                 // 学生第一次参与这个班级签到，但是MAC地址已经被其他学号的用过了，企图代签
-            	for (Student stu : Class.GetCurrentClass().getStudentsInClass().values())
+            	for (Student stu : currentClass.getStudentsInClass().values())
                     if (mac.equals(stu.getMac()))
                         return "1";
 
@@ -117,7 +129,7 @@ public class LocalServer {
                 for (int i = 1; i < count; i++)
                     student.getCheckList().add("\\");
                 student.getCheckList().add(countStr);
-                Class.GetCurrentClass().getStudentsInClass().put(id, student);
+                currentClass.getStudentsInClass().put(id, student);
                 tableView.getItems().add(student);
                 tableView.refresh();
                 return "0";
@@ -149,7 +161,7 @@ public class LocalServer {
     }
 
     // 读取签到表文件
-    private static void readCheckInData() {
+    private void readCheckInData() {
         try {
             File file = new File("HyperionData");
 
@@ -158,37 +170,7 @@ public class LocalServer {
 
             BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
 
-            String classId;
-            int checkInCount;
-            ConcurrentHashMap<String, Student> studentsInClass;
-
-            String studentInfo;
-            String studentId, studentMac;
-            Vector<String> checkVector;
-
-            while ((classId = reader.readLine()) != null) {
-                checkInCount = Integer.parseInt(reader.readLine());
-                studentsInClass = new ConcurrentHashMap<>();
-
-                while ((studentInfo = reader.readLine()) != null) {
-                    if (studentInfo.equals(""))
-                        break;
-
-                    String[] strings = studentInfo.split("\\s");
-
-                    studentId = strings[0];
-                    studentMac = strings[1];
-
-                    checkVector = new Vector<>(Arrays.asList(strings).subList(2, strings.length));
-
-                    Student student = new Student(studentId, studentMac, checkVector);
-                    studentsInClass.put(studentId, student);
-                }
-                
-
-                Class theClass = new Class(classId, checkInCount, studentsInClass);
-                Class.Classes.put(classId, theClass);
-            }
+            CheckInManager.getInstance().readClassesFromString(reader);
 
             reader.close();
         } catch (IOException e) {
@@ -197,33 +179,11 @@ public class LocalServer {
     }
 
     // 写入签到表文件
-    private static void writeCheckInData() {
+    private void writeCheckInData() {
         try {
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("HyperionData")));
 
-            StringBuilder content = new StringBuilder();
-
-            for (Class theClass : Class.Classes.values()) {
-                content.append(theClass.getId()).append("\n").append(theClass.getCheckInCount()).append("\n");
-
-                for (Student student : theClass.getStudentsInClass().values()) {
-                    content.append(student.getId()).append(" ").append(student.getMac());
-
-                    Vector<String> checkList = student.getCheckList();
-
-                    if (Class.CurrentClassId != null && theClass == Class.GetCurrentClass())
-                        for (int i = checkList.size(); i < Class.GetCurrentClass().getCheckInCount(); i++)
-                            checkList.add("\\");
-
-                    for (String checkIn : checkList)
-                        content.append(" ").append(checkIn);
-
-                    content.append("\n");
-                }
-                content.append("\n");
-            }
-
-            writer.write(content.toString());
+            writer.write(CheckInManager.getInstance().writeClassToString());
 
             writer.close();
         } catch (Exception e) {

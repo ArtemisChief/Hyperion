@@ -9,11 +9,11 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception{
-        Parent root = FXMLLoader.load(getClass().getResource("Teacher/View.fxml"));
+        Parent root = FXMLLoader.load(getClass().getResource("Teacher/Component/View.fxml"));
         primaryStage.setTitle("Hyperion - Teacher");
         primaryStage.setScene(new Scene(root, 590, 390));
         primaryStage.setResizable(false);
-        primaryStage.setOnCloseRequest(event -> LocalServer.Close());
+        primaryStage.setOnCloseRequest(event -> LocalServer.getInstance().Close());
         primaryStage.show();
     }
 
