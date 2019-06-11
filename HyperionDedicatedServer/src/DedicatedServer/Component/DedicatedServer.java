@@ -17,6 +17,8 @@ public class DedicatedServer {
 
     private static ServerSocket prof_ServerSocket;
 
+    public static String currentMAC;
+
     public static void launchServerPool() throws IOException{
         prof_ServerSocket = new ServerSocket(PROF_PORT);
         stu_ServerSocket = new ServerSocket(STU_PORT);
@@ -26,6 +28,7 @@ public class DedicatedServer {
                 try {
                     //等待教授客户端的连接
                     Socket prof = prof_ServerSocket.accept();
+                    //Todo：返回已有签到信息
                     TeacherController.processMessage(prof);
                 } catch (Exception e) {
                     // TODO: handle exception
