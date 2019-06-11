@@ -22,15 +22,13 @@ class TeacherController {
 
     /**
      * 向教师端返回第一个数字的结果
-     * 0 - 连接成功
-     * 1 - 签到已开启
-     * 2 - 收到新的签到信息
-     * 3 - 签到结束
+     * 0 - 签到已开启
+     * 1 - 收到新的签到信息（后接具体信息）
+     * 2 - 签到结束
      *
      * 来自教师端信息的第一个数字含义
-     * 0 - 尝试连接
-     * 1 - 开启签到
-     * 2 - 关闭签到
+     * 0 - 开启签到（后接开启签到班级信息）
+     * 1 - 关闭签到
      */
     public static void processMessage(Socket tcpSocket) {
         ProfTCPSocket = tcpSocket;

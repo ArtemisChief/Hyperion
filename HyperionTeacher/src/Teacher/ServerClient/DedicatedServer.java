@@ -21,15 +21,13 @@ public class DedicatedServer {
 
 	/**
 	 * 所有服务器返回第一个数字的结果
-	 * 0 - 连接成功
-	 * 1 - 签到已开启
-	 * 2 - 收到新的签到信息（后接具体信息）
-	 * 3 - 签到结束
+	 * 0 - 签到已开启
+	 * 1 - 收到新的签到信息（后接具体信息）
+	 * 2 - 签到结束
 	 *
 	 * 所有向服务器发送的信息，第一个数字含义
-	 * 0 - 尝试连接
-	 * 1 - 开启签到（后接开启签到班级信息）
-	 * 2 - 关闭签到
+	 * 0 - 开启签到（后接开启签到班级信息）
+	 * 1 - 关闭签到
 	 */
 
 	//点击连接按钮，尝试和服务器连接
@@ -68,9 +66,10 @@ public class DedicatedServer {
 
 		Thread thread = new Thread(() -> {
 			try{
+				//向服务器发送开启签到的班级信息
 				OutputStream outputStream = socket.getOutputStream();
 				PrintWriter printWriter = new PrintWriter(outputStream);
-				//Todo：获取班级、MAC信息
+				//Todo：代入具体的班级、MAC信息
 				printWriter.write("1\n" + "班级");
 				printWriter.flush();
 
