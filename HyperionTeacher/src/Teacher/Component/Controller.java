@@ -199,18 +199,33 @@ public class Controller {
 
         Thread thread = new Thread(() -> {
             try {
+                Platform.runLater(() -> {
+                    localModeRadioBtn.setDisable(true);
+                    dedicatedModeRadioBtn.setDisable(true);
+                    connectBtn.setText("Connecting...");
+                    connectBtn.setDisable(true);
+                });
                 dedicatedServer.connectToServer(IPTxtField.getText());
                 fillComboBox();
 
                 Platform.runLater(() -> {
+                    localModeRadioBtn.setDisable(false);
+                    dedicatedModeRadioBtn.setDisable(false);
                     toggleCheckInBtn.setDisable(false);
                     classComboBox.setDisable(false);
                     timesSlider.setDisable(false);
+                    connectBtn.setText("Connected");
                     connectBtn.setDisable(true);
                     IPTxtField.setDisable(true);
                 });
             } catch (IOException e) {
-                Platform.runLater(() -> showSimpleAlert(Alert.AlertType.ERROR, "Error", "Cannot connect to the server, please check your network or the Dedicated Server IP"));
+                Platform.runLater(() -> {
+                    showSimpleAlert(Alert.AlertType.ERROR, "Error", "Cannot connect to the server, please check your network or the Dedicated Server IP");
+                    connectBtn.setText("Connect");
+                    connectBtn.setDisable(false);
+                    localModeRadioBtn.setDisable(false);
+                    dedicatedModeRadioBtn.setDisable(false);
+                });
             }
         });
         thread.start();
