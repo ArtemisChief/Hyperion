@@ -59,7 +59,7 @@ class TeacherController {
         });
         thread.start();
 
-    }
+    }//end processMessage
 
     private static String ProcessContent(String content){
 
@@ -85,7 +85,8 @@ class TeacherController {
         }
 
         return "Invalid Request! Request = \" " + content.replace("\n","\\n") + " \" ";
-    }
+
+    }//end processContent
 
     //使用当前的Socket向教师发送信息
     public static void sendToTeacher(String message){
@@ -98,6 +99,7 @@ class TeacherController {
         }catch (Exception ex){
             //Todo:处理异常
         }
-    }
+
+    }//end sendToTeacher
 
 }
