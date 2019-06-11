@@ -1,8 +1,9 @@
 package DedicatedServer.Component;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.PrintStream;
+import DedicatedServer.Entity.Class;
+import DedicatedServer.Entity.Student;
+
+import java.io.*;
 import java.net.Socket;
 
 class TeacherController {
@@ -22,9 +23,7 @@ class TeacherController {
 
     /**
      * 向教师端返回第一个数字的结果
-     * 0 - 签到已开启
-     * 1 - 收到新的签到信息（后接具体信息）
-     * 2 - 签到结束
+     * 0 - 收到新的签到信息（后接具体信息）
      *
      * 来自教师端信息的第一个数字含义
      * 0 - 开启签到（后接开启签到班级信息）
@@ -41,12 +40,13 @@ class TeacherController {
                 String message = "";
                 while(line!=null&&line!="") {
                     message += line;
+
                     printStream.println("Hello prof, your message received.");
                     printStream.flush();
                     System.out.println("From prof:"+line);
                 }
-                //TODO:implement the processing of prof message.
-                String result = ProcessContent(message);
+                //TODO:处理结果已返回到result，需要显示在某处的话
+                String result = ProcessContent(message, ProfTCPSocket);
 
                 printStream.close();
                 bufferedReader.close();
@@ -60,10 +60,26 @@ class TeacherController {
 
     }
 
-    private static String ProcessContent(String content){
-        //Todo
+    private static String ProcessContent(String content, Socket socket){
 
-        return "";
+        if(content.substring(0,1).equals("0")){
+            //服务器开启该班级签到
+            content = content.substring(content.indexOf("\n") + 1);
+            Class.CurrentClassId = content.substring(0, content.indexOf("\n"));
+            DedicatedServer.currentMAC = content.substring(content.indexOf("\n") + 1);
+
+            return "CheckIn Started! CurrentClassId = " + Class.CurrentClassId + " ; CurrentMac = " + DedicatedServer.currentMAC + "\n";
+        }
+
+        if(content.substring(0,1).equals("1")){
+            //关闭签到
+            Class.CurrentClassId = null;
+            DedicatedServer.currentMAC = null;
+
+            return "CheckIn Ended!\n";
+        }
+
+        return "Invalid Request! Request = \" " + content.replace("\n","\\n") + " \" ";
     }
 
 }
