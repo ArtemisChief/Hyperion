@@ -17,7 +17,7 @@ public class DedicatedServer {
 
     private static ServerSocket prof_ServerSocket;
 
-    public static String currentMAC = "";
+    public static String currentMAC;
 
     public static void launchServerPool() throws IOException{
         prof_ServerSocket = new ServerSocket(PROF_PORT);

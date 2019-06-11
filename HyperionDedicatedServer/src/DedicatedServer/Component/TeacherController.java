@@ -24,6 +24,7 @@ class TeacherController {
     /**
      * 向教师端返回第一个数字的结果
      * 0 - 收到新的签到信息（后接具体信息）
+     * . - 确认签到停止
      *
      * 来自教师端信息的第一个数字含义
      * 0 - 开启签到（后接开启签到班级信息）
@@ -75,6 +76,12 @@ class TeacherController {
             //关闭签到
             Class.CurrentClassId = null;
             DedicatedServer.currentMAC = null;
+
+            //向教师端回复确认结束信息
+            OutputStream outputStream = socket.getOutputStream();
+            PrintWriter printWriter = new PrintWriter(outputStream);
+            printWriter.write(".");
+            printWriter.flush();
 
             return "CheckIn Ended!\n";
         }
