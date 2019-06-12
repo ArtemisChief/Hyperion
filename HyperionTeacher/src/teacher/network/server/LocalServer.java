@@ -15,7 +15,7 @@ public class LocalServer {
     /**
      * 来自学生端的信息
      * 签到请求，格式：“学号 学生MAC地址”
-
+     * <p>
      * 回复学生端的信息
      * 0 - 签到成功
      * 1 - 签到失败，学号与MAC地址不匹配
@@ -59,7 +59,7 @@ public class LocalServer {
                 datagramSocket = new DatagramSocket(SERVER_PORT);
                 DatagramPacket receivedDatagramPacket;
 
-                System.out.println("Local server launched, port = " + SERVER_PORT + ", waiting for receiving packet...");
+                System.out.println("[Server] Local server launched, port = " + SERVER_PORT + ", waiting for receiving packet");
 
                 while (true) {
                     receivedDatagramPacket = new DatagramPacket(new byte[1024], 1024);
@@ -68,7 +68,7 @@ public class LocalServer {
                 }
             } catch (SocketException e) {
                 writeCheckInData();
-                System.out.println("Local server closed");
+                System.out.println("[Server] Local server closed");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -85,7 +85,7 @@ public class LocalServer {
     private void processDatagramPacket(DatagramPacket receivedDatagramPacket) {
         Thread thread = new Thread(() -> {
             try {
-                System.out.println("Received from " + receivedDatagramPacket.getAddress().getHostAddress());
+                System.out.println("[Server] Student packet received from " + receivedDatagramPacket.getAddress().getHostAddress());
 
                 String receivedString = new String(receivedDatagramPacket.getData(), 0, receivedDatagramPacket.getLength());
 
@@ -104,12 +104,13 @@ public class LocalServer {
         String id = content.substring(0, content.indexOf(" "));
         String mac = content.substring(content.indexOf(" ") + 1);
 
-        Class currentClass= CheckInManager.getInstance().getCurrentClass();
+        Class currentClass = CheckInManager.getInstance().getCurrentClass();
 
-        if (currentClass == null)
+        if (currentClass == null) {
             // 当前签到的班级为空，未开启签到
+            System.out.println("[Student: " + id + "] Check-In not started");
             return "3";
-        else {
+        } else {
             int count = currentClass.getCheckInCount();
             String countStr = Integer.toString(count);
 
@@ -117,9 +118,11 @@ public class LocalServer {
 
             if (student == null) {
                 // 学生第一次参与这个班级签到，但是MAC地址已经被其他学号的用过了，企图代签
-            	for (Student stu : currentClass.getStudentsInClass().values())
-                    if (mac.equals(stu.getMac()))
+                for (Student stu : currentClass.getStudentsInClass().values())
+                    if (mac.equals(stu.getMac())) {
+                        System.out.println("[Student: " + id + "] Check-In failed, the same MAC address with different student ID");
                         return "1";
+                    }
 
                 // 学生第一次参与这个班级签到，绑定学号与MAC地址，签到成功
                 student = new Student(id, mac);
@@ -129,6 +132,7 @@ public class LocalServer {
                 currentClass.getStudentsInClass().put(id, student);
                 tableView.getItems().add(student);
                 tableView.refresh();
+                System.out.println("[Student: " + id + "] Check-In success, new student");
                 return "0";
             } else {
                 // 该班级已经存在当前学生
@@ -140,15 +144,19 @@ public class LocalServer {
                             student.getCheckList().add("\\");
                         student.getCheckList().add(countStr);
                         tableView.refresh();
+                        System.out.println("[Student: " + id + "] Check-In success");
                         return "0";
                     } else if (student.getCheckList().get(count - 1).equals("\\")) {
                         // 该学生当前次漏签，补签成功
                         student.getCheckList().set(count - 1, countStr);
                         tableView.refresh();
+                        System.out.println("[Student: " + id + "] Check-In success");
                         return "0";
-                    } else
+                    } else {
                         // 该学生本次已经签到，提示重复
+                        System.out.println("[Student: " + id + "] Check-In already done");
                         return "2";
+                    }
                 } else {
                     // 检测MAC地址与记录不同，不在常用机进行操作，是代签
                     return "1";

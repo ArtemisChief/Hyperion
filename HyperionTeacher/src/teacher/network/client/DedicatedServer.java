@@ -12,13 +12,13 @@ public class DedicatedServer {
 
 	/**
 	 * 教师端凭证：1（单独一行）
-	 *
+	 * <p>
 	 * 向服务器发送的信息
 	 * 信息同步 - "0"
 	 * 开启签到 - "1 设置的MAC地址 班级ID 签到次数"
 	 * 关闭签到 - "2"
 	 * 断开连接 - "3"
-	 *
+	 * <p>
 	 * 从服务器接收的信息
 	 * 签到成功信息 - "学号 学生MAC地址"
 	 * 确认签到停止 - "."
@@ -43,6 +43,9 @@ public class DedicatedServer {
 	// 是否连接
 	private boolean isConnected;
 
+	// 是否正在签到
+	private boolean isCheckingIn;
+
 	// 发送
 	private PrintWriter printWriter;
 
@@ -56,6 +59,7 @@ public class DedicatedServer {
 	private DedicatedServer() {
 		socket = null;
 		isConnected = false;
+		isCheckingIn = false;
 		printWriter = null;
 		bufferedReader = null;
 		tableView = null;
@@ -67,13 +71,13 @@ public class DedicatedServer {
 	}
 
 	// 得到连接状态
-	public boolean getIsConnected(){
+	public boolean getIsConnected() {
 		return isConnected;
 	}
 
 	// 连接服务器
 	public boolean connectToServer(String serverIP) throws IOException {
-		System.out.println("Dedicated server connecting...");
+		System.out.println("[Client] Connecting dedicated server...");
 
 		socket = new Socket(serverIP, SERVER_PORT);
 
@@ -91,13 +95,13 @@ public class DedicatedServer {
 		printWriter.flush();
 
 		// 判断连接成功与否
-		if(!bufferedReader.readLine().equals("0")){
+		if (!bufferedReader.readLine().equals("0")) {
 			socket.close();
-			System.out.println("Dedicated server connect fail, there is already a teacher connecting");
+			System.out.println("[Client] Connecting to dedicated server failed, there is already a teacher connecting");
 			return false;
 		}
 
-		System.out.println("Dedicated server connected, port = " + SERVER_PORT + ", waiting for receiving message...");
+		System.out.println("[Client] Connected to dedicated server , port = " + SERVER_PORT + ", waiting for receiving message");
 
 
 		// 同步班级数据
@@ -106,7 +110,7 @@ public class DedicatedServer {
 		CheckInManager.getInstance().readClassesFromString(bufferedReader);
 
 		isConnected = true;
-		System.out.println("Sync data complete");
+		System.out.println("[Teacher] Sync data complete");
 		return true;
 	}
 
@@ -114,14 +118,17 @@ public class DedicatedServer {
 	public void startCheckIn(String mac, String classId, int count) {
 		Thread thread = new Thread(() -> {
 			try {
+				isCheckingIn = true;
 				printWriter.println("1 " + mac + " " + classId + " " + count);
 				printWriter.flush();
-				System.out.println("Start Check-in request sent, start receiving check-in message...");
+
+				System.out.println("[Teacher] Start Check-in");
 
 				String receivedString;
 				Class currentClass = CheckInManager.getInstance().getCurrentClass();
 
 				while (!(receivedString = bufferedReader.readLine()).equals(".")) {
+					System.out.println("[Teacher] Check-in confirmed");
 					// 接收学号，处理签到信息
 					String stuId = receivedString.substring(0, receivedString.indexOf(" "));
 					String stuMac = receivedString.substring(receivedString.indexOf(" ") + 1);
@@ -152,8 +159,8 @@ public class DedicatedServer {
 						}
 					}
 				}
+				isCheckingIn = false;
 			} catch (IOException e) {
-				e.printStackTrace();
 			}
 		});
 		thread.start();
@@ -163,17 +170,21 @@ public class DedicatedServer {
 	public void stopCheckIn() {
 		printWriter.println("2");
 		printWriter.flush();
-		System.out.println("Stop Check-in request sent, start receiving check-in message...");
+		System.out.println("[Teacher] Stop Check-in");
 	}
 
 	// 关闭连接
 	public void close() {
 		try {
-			printWriter.println("3");
-			printWriter.flush();
-			socket.close();
-			isConnected = false;
-			System.out.println("Dedicated server connection closed");
+			if (isConnected) {
+				if (isCheckingIn)
+					stopCheckIn();
+				printWriter.println("3");
+				printWriter.flush();
+				socket.close();
+				isConnected = false;
+				System.out.println("[Client] Dedicated server connection closed");
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

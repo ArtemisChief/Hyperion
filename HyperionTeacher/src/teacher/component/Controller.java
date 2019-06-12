@@ -109,6 +109,9 @@ public class Controller {
             classComboBox.setDisable(false);
             timesSlider.setDisable(false);
 
+            classComboBox.getItems().clear();
+            tableView.getItems().clear();
+
             if (dedicatedServer.getIsConnected()) {
                 dedicatedServer.close();
             }
@@ -169,12 +172,15 @@ public class Controller {
                 Optional<String> result = dialog.showAndWait();
                 if (result.isPresent()) {
                     dedicatedServer.startCheckIn(result.get(), classComboBox.getValue(), (int) timesSlider.getValue());
+                    connectBtn.setDisable(true);
                 } else {
+                    toggleCheckInBtn.setSelected(false);
                     toggleCheckInBtn.setText("Start Check-In");
                     timesSlider.setDisable(false);
                     classComboBox.setDisable(false);
                     dedicatedModeRadioBtn.setDisable(false);
                     localModeRadioBtn.setDisable(false);
+                    connectBtn.setDisable(false);
 
                     checkInManager.setCurrentClass(null);
                 }
@@ -188,8 +194,10 @@ public class Controller {
 
             checkInManager.setCurrentClass(null);
 
-            if (dedicatedModeRadioBtn.isSelected())
+            if (dedicatedModeRadioBtn.isSelected()) {
                 dedicatedServer.stopCheckIn();
+                connectBtn.setDisable(false);
+            }
         }
     }
 
@@ -201,54 +209,67 @@ public class Controller {
             return;
         }
 
-        Thread thread = new Thread(() -> {
-            try {
-                Platform.runLater(() -> {
-                    localModeRadioBtn.setDisable(true);
-                    dedicatedModeRadioBtn.setDisable(true);
-                    connectBtn.setText("Connecting...");
-                    connectBtn.setDisable(true);
-                });
-
-                if(dedicatedServer.connectToServer(IPTxtField.getText())) {
-                    fillComboBox();
-
+        if (!DedicatedServer.getInstance().getIsConnected()) {
+            Thread thread = new Thread(() -> {
+                try {
                     Platform.runLater(() -> {
-                        localModeRadioBtn.setDisable(false);
-                        dedicatedModeRadioBtn.setDisable(false);
-                        toggleCheckInBtn.setDisable(false);
-                        classComboBox.setDisable(false);
-                        timesSlider.setDisable(false);
-                        connectBtn.setText("Connected");
+                        localModeRadioBtn.setDisable(true);
+                        dedicatedModeRadioBtn.setDisable(true);
+                        connectBtn.setText("Connecting...");
                         connectBtn.setDisable(true);
-                        IPTxtField.setDisable(true);
                     });
-                }else{
+
+                    if (dedicatedServer.connectToServer(IPTxtField.getText())) {
+                        fillComboBox();
+
+                        Platform.runLater(() -> {
+                            localModeRadioBtn.setDisable(false);
+                            dedicatedModeRadioBtn.setDisable(false);
+                            toggleCheckInBtn.setDisable(false);
+                            classComboBox.setDisable(false);
+                            timesSlider.setDisable(false);
+                            connectBtn.setText("Disconnect");
+                            connectBtn.setDisable(false);
+                            IPTxtField.setDisable(true);
+                        });
+                    } else {
+                        Platform.runLater(() -> {
+                            showSimpleAlert(Alert.AlertType.ERROR, "Error", "Dedicated server connect fail, there is already a teacher connecting");
+                            connectBtn.setText("Connect");
+                            connectBtn.setDisable(false);
+                            localModeRadioBtn.setDisable(false);
+                            dedicatedModeRadioBtn.setDisable(false);
+                        });
+                    }
+                } catch (IOException e) {
                     Platform.runLater(() -> {
-                        showSimpleAlert(Alert.AlertType.ERROR, "Error", "Dedicated server connect fail, there is already a teacher connecting");
+                        showSimpleAlert(Alert.AlertType.ERROR, "Error", "Cannot connect to the server, please check your network or the Dedicated server IP");
                         connectBtn.setText("Connect");
                         connectBtn.setDisable(false);
                         localModeRadioBtn.setDisable(false);
                         dedicatedModeRadioBtn.setDisable(false);
                     });
                 }
-            } catch (IOException e) {
-                Platform.runLater(() -> {
-                    showSimpleAlert(Alert.AlertType.ERROR, "Error", "Cannot connect to the server, please check your network or the Dedicated server IP");
-                    connectBtn.setText("Connect");
-                    connectBtn.setDisable(false);
-                    localModeRadioBtn.setDisable(false);
-                    dedicatedModeRadioBtn.setDisable(false);
-                });
-            }
-        });
-        thread.start();
+            });
+            thread.start();
+        } else {
+            DedicatedServer.getInstance().close();
+            connectBtn.setText("Connect");
+            connectBtn.setDisable(false);
+            localModeRadioBtn.setDisable(false);
+            dedicatedModeRadioBtn.setDisable(false);
+            IPTxtField.setDisable(false);
+            classComboBox.setDisable(true);
+            timesSlider.setDisable(true);
+            classComboBox.getItems().clear();
+            tableView.getItems().clear();
+        }
     }
 
     @FXML
     // 填充签到表
     public void fillTableView() {
-        if (checkInManager.getClasses() == null || checkInManager.getClasses().get(classComboBox.getValue()) == null)
+        if (checkInManager.getClasses() == null || classComboBox.getValue() == null || checkInManager.getClasses().get(classComboBox.getValue()) == null)
             tableView.getItems().clear();
         else {
             ObservableList<Student> studentObservableList = FXCollections.observableArrayList(checkInManager.getClasses().get(classComboBox.getValue()).getStudentsInClass().values());
