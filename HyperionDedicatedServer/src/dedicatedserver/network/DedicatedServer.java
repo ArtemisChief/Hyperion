@@ -147,7 +147,7 @@ public class DedicatedServer {
     }
 
     // 处理学生内容
-    private String processStudentContent(String str) {
+    private synchronized String processStudentContent(String str) {
         String stuId = str.substring(0, str.indexOf(" "));
         String stdMac = str.substring(str.indexOf(" ") + 1, str.lastIndexOf(" "));
         String routerMac = str.substring(str.lastIndexOf(" ") + 1);
@@ -268,7 +268,7 @@ public class DedicatedServer {
     }
 
     // 处理老师内容
-    private String processTeacherContent(String str) {
+    private synchronized String processTeacherContent(String str) {
         int type;
 
         if (str.length() > 1)
