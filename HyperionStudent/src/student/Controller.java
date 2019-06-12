@@ -1,4 +1,4 @@
-package Student;
+package student;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -14,7 +14,21 @@ import java.util.regex.Pattern;
 
 public class Controller {
 
-    private final int serverPort = 20076;
+    /**
+     * 学生端凭证：0（单独一行）
+     *
+     * 向服务器发送的信息
+     * 签到请求 - "学号 学生MAC地址 默认网关MAC地址"
+     *
+     * 从服务器接收的信息
+     * 0 - 签到成功
+     * 1 - 签到失败，学号与MAC地址不匹配
+     * 2 - 重复签到
+     * 3 - 本轮签到已关闭
+     * 4 - 签到失败，不在指定位置签到
+     */
+
+    private static final int SERVER_PORT = 20076;
 
     private String localMac;
     private String routerMac;
@@ -57,13 +71,13 @@ public class Controller {
     // 显示说明信息
     protected void updateInfo(MouseEvent event) {
         if (event.getSource() == localMacAddressLabel)
-            infoLabel.setText("This shows your local MAC address, which binds to your Student No.");
+            infoLabel.setText("This shows your local MAC address, which binds to your student No.");
         else if (event.getSource() == routerMacAddressLabel)
             infoLabel.setText("This shows your router MAC address");
         else if (event.getSource() == IPTxtField)
             infoLabel.setText("Please type the dedicated server IP here");
         else if (event.getSource() == stdNoTxtField)
-            infoLabel.setText("Please type your Student No. here");
+            infoLabel.setText("Please type your student No. here");
         else if (event.getSource() == localModeRadioBtn)
             infoLabel.setText("This mode requests teacher and student use the same router");
         else if (event.getSource() == dedicatedModeRadioBtn)
@@ -85,7 +99,7 @@ public class Controller {
     // 向服务器发送消息
     protected void sendMessage() {
         if (stdNoTxtField.getText().equals("")) {
-            showSimpleAlert(Alert.AlertType.ERROR, "Error", "Please input your Student No.");
+            showSimpleAlert(Alert.AlertType.ERROR, "Error", "Please input your student No.");
             return;
         }
 
@@ -110,7 +124,7 @@ public class Controller {
                         progressIndicator.setVisible(true);
                         progressIndicator.setProgress(-1);
                     });
-                    receivedString = sendTCP(IPTxtField.getText(), serverPort, "0\n" + stdNoTxtField.getText() + "\n" + localMac + "\n" + routerMac);
+                    receivedString = sendTCP(IPTxtField.getText(), SERVER_PORT, stdNoTxtField.getText() + " " + localMac + " " + routerMac);
                 } catch (IOException e) {
                     Platform.runLater(() -> {
                         showSimpleAlert(Alert.AlertType.ERROR, "Error", "Cannot connect to the server, please check your network or the Dedicated Server IP");
@@ -131,7 +145,7 @@ public class Controller {
                         progressIndicator.setVisible(true);
                         progressIndicator.setProgress(-1);
                     });
-                    receivedString = sendUDP(broadCastIP, serverPort, stdNoTxtField.getText() + "\n" + localMac);
+                    receivedString = sendUDP(broadCastIP, SERVER_PORT, stdNoTxtField.getText() + " " + localMac);
                 } catch (IOException e) {
                     Platform.runLater(() -> {
                         showSimpleAlert(Alert.AlertType.ERROR, "Error", "Cannot connect to the server, please check your network");
@@ -155,7 +169,7 @@ public class Controller {
                             progressIndicator.setPrefHeight(36);
                             break;
                         case 1:
-                            showSimpleAlert(Alert.AlertType.ERROR, "Failure", "Fail to Check-in, please check your Student No.");
+                            showSimpleAlert(Alert.AlertType.ERROR, "Failure", "Fail to Check-in, please check your student No.");
                             progressIndicator.setVisible(false);
                             checkInBtn.setDisable(false);
                             localModeRadioBtn.setDisable(false);
@@ -179,6 +193,17 @@ public class Controller {
                             stdNoTxtField.setDisable(false);
                             if (dedicatedModeRadioBtn.isSelected())
                                 IPTxtField.setDisable(false);
+                            break;
+                        case 4:
+                            showSimpleAlert(Alert.AlertType.ERROR, "Failure", "Fail to Check-in, please check your router");
+                            progressIndicator.setVisible(false);
+                            checkInBtn.setDisable(false);
+                            localModeRadioBtn.setDisable(false);
+                            dedicatedModeRadioBtn.setDisable(false);
+                            stdNoTxtField.setDisable(false);
+                            if (dedicatedModeRadioBtn.isSelected())
+                                IPTxtField.setDisable(false);
+                            break;
                         default:
                             break;
                     }
@@ -192,22 +217,15 @@ public class Controller {
     private String sendTCP(String ip, int port, String message) throws IOException {
         // 发送
         Socket socket = new Socket(ip, port);
-        OutputStream outputStream = socket.getOutputStream();
-        PrintWriter printWriter = new PrintWriter(outputStream);
-        printWriter.write(message);
+        PrintWriter printWriter = new PrintWriter(socket.getOutputStream());
+        printWriter.println("0\n" + message);
         printWriter.flush();
-        socket.shutdownOutput();
 
         // 接收
-        InputStream inputStream = socket.getInputStream();
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         String receivedString = bufferedReader.readLine();
 
         // 关闭连接
-        bufferedReader.close();
-        inputStream.close();
-        printWriter.close();
-        outputStream.close();
         socket.close();
 
         return receivedString;
