@@ -1,8 +1,8 @@
-package Teacher.Component.Server;
+package teacher.network.server;
 
-import Teacher.Component.CheckInManager;
-import Teacher.Entity.Class;
-import Teacher.Entity.Student;
+import teacher.component.CheckInManager;
+import teacher.entity.Class;
+import teacher.entity.Student;
 import javafx.scene.control.TableView;
 
 import java.io.*;
@@ -13,9 +13,14 @@ import java.net.SocketException;
 public class LocalServer {
 
     /**
-     * 服务器状态：
-     * 0 - 未开启签到
-     * 1 - 已开启签到
+     * 来自学生端的信息
+     * 签到请求，格式：“学号 学生MAC地址”
+
+     * 回复学生端的信息
+     * 0 - 签到成功
+     * 1 - 签到失败，学号与MAC地址不匹配
+     * 2 - 重复签到
+     * 3 - 本轮签到已关闭
      */
 
     // 单例
@@ -27,7 +32,7 @@ public class LocalServer {
     }
 
     // 服务器端口号
-    private static final int serverPort = 20076;
+    private static final int SERVER_PORT = 20076;
 
     // UDP数据报Socket
     private DatagramSocket datagramSocket;
@@ -51,15 +56,15 @@ public class LocalServer {
 
         Thread thread = new Thread(() -> {
             try {
-                datagramSocket = new DatagramSocket(serverPort);
+                datagramSocket = new DatagramSocket(SERVER_PORT);
                 DatagramPacket receivedDatagramPacket;
 
-                System.out.println("Local server launched, port = " + serverPort + ", waiting for receiving packet...");
+                System.out.println("Local server launched, port = " + SERVER_PORT + ", waiting for receiving packet...");
 
                 while (true) {
                     receivedDatagramPacket = new DatagramPacket(new byte[1024], 1024);
                     datagramSocket.receive(receivedDatagramPacket);
-                    ProcessDatagramPacket(receivedDatagramPacket);
+                    processDatagramPacket(receivedDatagramPacket);
                 }
             } catch (SocketException e) {
                 writeCheckInData();
@@ -72,12 +77,12 @@ public class LocalServer {
     }
 
     // 关闭服务器
-    public void Close() {
+    public void close() {
         datagramSocket.close();
     }
 
     // 处理数据包
-    private void ProcessDatagramPacket(DatagramPacket receivedDatagramPacket) {
+    private void processDatagramPacket(DatagramPacket receivedDatagramPacket) {
         Thread thread = new Thread(() -> {
             try {
                 System.out.println("Received from " + receivedDatagramPacket.getAddress().getHostAddress());
@@ -94,20 +99,12 @@ public class LocalServer {
         thread.start();
     }
 
-    /**
-     * 返回结果
-     * 0 - 签到成功
-     * 1 - 签到失败，学号与MAC地址不匹配
-     * 2 - 重复签到
-     * 3 - 本轮签到已关闭
-     */
-
     // 处理签到内容
     private String processContent(String content) {
-        String id = content.substring(0, content.indexOf("\n"));
-        String mac = content.substring(content.indexOf("\n") + 1);
+        String id = content.substring(0, content.indexOf(" "));
+        String mac = content.substring(content.indexOf(" ") + 1);
 
-        Class currentClass=CheckInManager.getInstance().getCurrentClass();
+        Class currentClass= CheckInManager.getInstance().getCurrentClass();
 
         if (currentClass == null)
             // 当前签到的班级为空，未开启签到

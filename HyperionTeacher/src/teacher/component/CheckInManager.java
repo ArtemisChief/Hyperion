@@ -1,7 +1,7 @@
-package Teacher.Component;
+package teacher.component;
 
-import Teacher.Entity.Class;
-import Teacher.Entity.Student;
+import teacher.entity.Class;
+import teacher.entity.Student;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -38,6 +38,9 @@ public class CheckInManager {
 
     // 得到当前签到班级
     public Class getCurrentClass() {
+        if (currentClassId == null)
+            return null;
+
         return classes.get(currentClassId);
     }
 
@@ -81,8 +84,6 @@ public class CheckInManager {
             Class theClass = new Class(classId, checkInCount, studentsInClass);
             classes.put(classId, theClass);
         }
-
-        reader.close();
     }
 
     // 转换班级信息到字符串
