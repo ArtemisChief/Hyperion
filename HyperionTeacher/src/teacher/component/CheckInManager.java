@@ -27,7 +27,7 @@ public class CheckInManager {
 
     // 构造函数
     private CheckInManager() {
-        classes = null;
+        classes = new ConcurrentHashMap<>();
         currentClassId = null;
     }
 
