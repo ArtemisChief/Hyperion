@@ -1,7 +1,7 @@
-package teacher.component;
+package dedicatedserver.component;
 
-import teacher.entity.Class;
-import teacher.entity.Student;
+import dedicatedserver.entity.Class;
+import dedicatedserver.entity.Student;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -25,10 +25,14 @@ public class CheckInManager {
     // 当前签到的班级
     private String currentClassId;
 
+    // 当前设置的MAC地址
+    private String currentMAC;
+
     // 构造函数
     private CheckInManager() {
         classes = null;
         currentClassId = null;
+        currentMAC=null;
     }
 
     // 得到班级表
@@ -47,6 +51,16 @@ public class CheckInManager {
     // 设置当前签到班级
     public void setCurrentClass(String currentClassId) {
         this.currentClassId = currentClassId;
+    }
+
+    // 得到当前设置的MAC地址
+    public String getCurrentMAC() {
+        return currentMAC;
+    }
+
+    // 设置当前的MAC地址
+    public void setCurrentMAC(String currentMAC) {
+        this.currentMAC = currentMAC;
     }
 
     // 从字符串中读取班级信息
@@ -84,6 +98,7 @@ public class CheckInManager {
             Class theClass = new Class(classId, checkInCount, studentsInClass);
             classes.put(classId, theClass);
         }
+
     }
 
     // 转换班级信息到字符串
