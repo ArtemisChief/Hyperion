@@ -127,35 +127,37 @@ public class DedicatedServer {
 				String receivedString;
 				Class currentClass = CheckInManager.getInstance().getCurrentClass();
 
-				while (!(receivedString = bufferedReader.readLine()).equals(".")) {
-					System.out.println("[Teacher] Check-in confirmed");
-					// 接收学号，处理签到信息
-					String stuId = receivedString.substring(0, receivedString.indexOf(" "));
-					String stuMac = receivedString.substring(receivedString.indexOf(" ") + 1);
+				synchronized (this) {
+					while (!(receivedString = bufferedReader.readLine()).equals(".")) {
+						System.out.println("[Teacher] Check-in confirmed");
+						// 接收学号，处理签到信息
+						String stuId = receivedString.substring(0, receivedString.indexOf(" "));
+						String stuMac = receivedString.substring(receivedString.indexOf(" ") + 1);
 
-					Student student = currentClass.getStudentsInClass().get(stuId);
+						Student student = currentClass.getStudentsInClass().get(stuId);
 
-					if (student == null) {
-						// 接收到的学生是第一次签到成功的
-						student = new Student(stuId, stuMac);
-						for (int i = 1; i < count; i++)
-							student.getCheckList().add("\\");
-						student.getCheckList().add(Integer.toString(count));
-						currentClass.getStudentsInClass().put(stuId, student);
-						tableView.getItems().add(student);
-						tableView.refresh();
-					} else {
-						// 接收到的学生是已经存在的
-						if (student.getCheckList().size() < count) {
-							// 该学生本次还未签到，签到成功
-							for (int i = student.getCheckList().size() + 1; i < count; i++)
+						if (student == null) {
+							// 接收到的学生是第一次签到成功的
+							student = new Student(stuId, stuMac);
+							for (int i = 1; i < count; i++)
 								student.getCheckList().add("\\");
 							student.getCheckList().add(Integer.toString(count));
+							currentClass.getStudentsInClass().put(stuId, student);
+							tableView.getItems().add(student);
 							tableView.refresh();
-						} else if (student.getCheckList().get(count - 1).equals("\\")) {
-							// 该学生当前次漏签，补签成功
-							student.getCheckList().set(count - 1, Integer.toString(count));
-							tableView.refresh();
+						} else {
+							// 接收到的学生是已经存在的
+							if (student.getCheckList().size() < count) {
+								// 该学生本次还未签到，签到成功
+								for (int i = student.getCheckList().size() + 1; i < count; i++)
+									student.getCheckList().add("\\");
+								student.getCheckList().add(Integer.toString(count));
+								tableView.refresh();
+							} else if (student.getCheckList().get(count - 1).equals("\\")) {
+								// 该学生当前次漏签，补签成功
+								student.getCheckList().set(count - 1, Integer.toString(count));
+								tableView.refresh();
+							}
 						}
 					}
 				}

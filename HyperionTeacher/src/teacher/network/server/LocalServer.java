@@ -100,7 +100,7 @@ public class LocalServer {
     }
 
     // 处理签到内容
-    private String processContent(String content) {
+    private synchronized String processContent(String content) {
         String id = content.substring(0, content.indexOf(" "));
         String mac = content.substring(content.indexOf(" ") + 1);
 
