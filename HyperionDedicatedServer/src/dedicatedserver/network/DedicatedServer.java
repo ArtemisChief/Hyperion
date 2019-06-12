@@ -75,7 +75,7 @@ public class DedicatedServer {
             try {
                 serverSocket = new ServerSocket(SERVER_PORT);
                 Socket socket;
-                System.out.println("Dedicated server launched, port = " + SERVER_PORT + ", waiting for client connection...");
+                System.out.println("[Server] Dedicated server launched, port = " + SERVER_PORT + ", waiting for client connection");
 
                 while (true) {
                     socket = serverSocket.accept();
@@ -83,16 +83,21 @@ public class DedicatedServer {
                     BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                     String sender = bufferedReader.readLine();
 
-                    if (sender.equals("0"))
-                        processStudentConnection(socket,bufferedReader);
-                    else if (sender.equals("1")) {
-                        processTeacherConnection(socket,bufferedReader);
-                    } else
-                        socket.close();
+                    switch (sender) {
+                        case "0":
+                            processStudentConnection(socket, bufferedReader);
+                            break;
+                        case "1":
+                            processTeacherConnection(socket, bufferedReader);
+                            break;
+                        default:
+                            socket.close();
+                            break;
+                    }
                 }
             } catch (IOException e) {
                 writeCheckInData();
-                System.out.println("Dedicated server closed");
+                System.out.println("[Server] Dedicated server closed");
             }
         });
         thread.start();
@@ -111,7 +116,7 @@ public class DedicatedServer {
     private void processStudentConnection(Socket socket, BufferedReader bufferedReader) {
         Thread thread = new Thread(() -> {
             try {
-                System.out.println("Student connected from " + socket.getInetAddress().getHostAddress());
+                System.out.println("[Server] Student connected from " + socket.getInetAddress().getHostAddress());
 
                 // 接收消息
                 String receivedString = bufferedReader.readLine();
@@ -132,10 +137,8 @@ public class DedicatedServer {
                 }
 
                 // 关闭连接
-                if (socket != null) {
-                    socket.close();
-                    System.out.println("Student disconnected from " + socket.getInetAddress().getHostAddress());
-                }
+                socket.close();
+                System.out.println("[Server] Student disconnected from " + socket.getInetAddress().getHostAddress());
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -151,12 +154,14 @@ public class DedicatedServer {
 
         Class currentClass = CheckInManager.getInstance().getCurrentClass();
 
-        if (currentClass == null)
+        if (currentClass == null) {
             // 当前签到的班级为空，未开启签到
+            System.out.println("[Student: " + stuId + "] Check-In not started");
             return "3";
-        else {
+        } else {
             if (!routerMac.equals(CheckInManager.getInstance().getCurrentMAC())) {
                 // 目标路由器MAC匹配失败，怕是在宿舍签到
+                System.out.println("[Student: " + stuId + "] Check-In failed, wrong router MAC address");
                 return "4";
             } else {
                 // 目标路由器MAC匹配成功，是在指定位置签到
@@ -168,8 +173,10 @@ public class DedicatedServer {
                 if (student == null) {
                     // 学生第一次参与这个班级签到，但是MAC地址已经被其他学号的用过了，企图代签
                     for (Student stu : currentClass.getStudentsInClass().values())
-                        if (stdMac.equals(stu.getMac()))
+                        if (stdMac.equals(stu.getMac())) {
+                            System.out.println("[Student: " + stuId + "] Check-In failed, the same MAC address with different student ID");
                             return "1";
+                        }
 
                     // 学生第一次参与这个班级签到，绑定学号与MAC地址，签到成功
                     student = new Student(stuId, stdMac);
@@ -177,6 +184,7 @@ public class DedicatedServer {
                         student.getCheckList().add("\\");
                     student.getCheckList().add(countStr);
                     currentClass.getStudentsInClass().put(stuId, student);
+                    System.out.println("[Student: " + stuId + "] Check-In success, new student");
                     return "0";
                 } else {
                     // 该班级已经存在当前学生
@@ -187,16 +195,21 @@ public class DedicatedServer {
                             for (int i = student.getCheckList().size() + 1; i < count; i++)
                                 student.getCheckList().add("\\");
                             student.getCheckList().add(countStr);
+                            System.out.println("[Student: " + stuId + "] Check-In success");
                             return "0";
                         } else if (student.getCheckList().get(count - 1).equals("\\")) {
                             // 该学生当前次漏签，补签成功
                             student.getCheckList().set(count - 1, countStr);
+                            System.out.println("[Student: " + stuId + "] Check-In success");
                             return "0";
-                        } else
+                        } else {
                             // 该学生本次已经签到，提示重复
+                            System.out.println("[Student: " + stuId + "] Check-In already done");
                             return "2";
+                        }
                     } else {
                         // 检测MAC地址与记录不同，不在常用机进行操作，是代签
+                        System.out.println("[Student: " + stuId + "] Check-In failed, the same student ID with different MAC address");
                         return "1";
                     }
                 }
@@ -205,7 +218,7 @@ public class DedicatedServer {
     }
 
     // 处理老师连接(长连接)
-    private void processTeacherConnection(Socket socket,BufferedReader bufferedReader) {
+    private void processTeacherConnection(Socket socket, BufferedReader bufferedReader) {
         if (teacherSocket == null) {
             try {
                 teacherSocket = socket;
@@ -214,7 +227,7 @@ public class DedicatedServer {
 
                 teacherPrintWriter.println("0");
                 teacherPrintWriter.flush();
-                System.out.println("Teacher connected from " + teacherSocket.getInetAddress().getHostAddress());
+                System.out.println("[Server] Teacher connected from " + teacherSocket.getInetAddress().getHostAddress());
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -235,7 +248,7 @@ public class DedicatedServer {
                     if (teacherSocket != null) {
                         teacherSocket.close();
                         teacherSocket = null;
-                        System.out.println("Teacher disconnected from " + socket.getInetAddress().getHostAddress());
+                        System.out.println("[Server] Teacher disconnected from " + socket.getInetAddress().getHostAddress());
                     }
 
                 } catch (IOException e) {
@@ -268,12 +281,10 @@ public class DedicatedServer {
         switch (type) {
             case 0:
                 // 信息同步
-                System.out.println("Teacher sync data complete");
-
+                System.out.println("[Teacher] Sync data complete");
                 return checkInManager.writeClassToString();
             case 1:
                 // 开启签到
-                System.out.println("Teacher start Check-in");
 
                 String content = str.substring(str.indexOf(" ") + 1);
 
@@ -289,14 +300,16 @@ public class DedicatedServer {
                 else
                     checkInManager.getCurrentClass().setCheckInCount(checkInCount);
 
+                System.out.println("[Teacher] Start Check-in: Class-"+currentClassId+", Router MAC: "+currentMAC+", Times: "+checkInCount);
                 return null;
             case 2:
                 // 关闭签到
-                System.out.println("Teacher stop Check-in");
-
                 checkInManager.setCurrentMAC(null);
                 checkInManager.setCurrentClass(null);
 
+                writeCheckInData();
+
+                System.out.println("[Teacher] Stop Check-in");
                 return ".";
             default:
                 return null;

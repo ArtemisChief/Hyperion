@@ -32,7 +32,7 @@ public class CheckInManager {
     private CheckInManager() {
         classes = null;
         currentClassId = null;
-        currentMAC=null;
+        currentMAC = null;
     }
 
     // 得到班级表
