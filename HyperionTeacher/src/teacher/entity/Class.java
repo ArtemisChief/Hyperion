@@ -1,4 +1,4 @@
-package Teacher.Entity;
+package teacher.entity;
 
 import java.util.concurrent.ConcurrentHashMap;
 

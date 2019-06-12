@@ -5,7 +5,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.Pane?>
 
-<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Teacher.Component.Controller">
+<Pane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="teacher.component.Controller">
    <children>
       <Button fx:id="connectBtn" disable="true" layoutX="488.0" layoutY="11.0" mnemonicParsing="false" onAction="#connectToDedicatedServer" prefHeight="23.0" prefWidth="98.0" text="Connect" />
       <ComboBox fx:id="classComboBox" editable="true" layoutX="337.0" layoutY="45.0" onHiding="#fillTableView" prefHeight="23.0" prefWidth="137.0" promptText="Class to Check-In" />

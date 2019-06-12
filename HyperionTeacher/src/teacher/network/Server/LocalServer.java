@@ -1,4 +1,4 @@
-package Teacher.ServerClient;
+package Teacher.Component.Server;
 
 import Teacher.Component.CheckInManager;
 import Teacher.Entity.Class;
@@ -54,7 +54,7 @@ public class LocalServer {
                 datagramSocket = new DatagramSocket(serverPort);
                 DatagramPacket receivedDatagramPacket;
 
-                System.out.println("Local server launched, port = " + serverPort + ", waiting for receive packet...");
+                System.out.println("Local server launched, port = " + serverPort + ", waiting for receiving packet...");
 
                 while (true) {
                     receivedDatagramPacket = new DatagramPacket(new byte[1024], 1024);

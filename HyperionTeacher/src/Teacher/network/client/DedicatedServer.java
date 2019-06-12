@@ -1,8 +1,8 @@
-package Teacher.ServerClient;
+package teacher.network.client;
 
-import Teacher.Component.CheckInManager;
-import Teacher.Entity.Class;
-import Teacher.Entity.Student;
+import teacher.component.CheckInManager;
+import teacher.entity.Class;
+import teacher.entity.Student;
 import javafx.scene.control.TableView;
 
 import java.io.*;
@@ -11,13 +11,19 @@ import java.net.*;
 public class DedicatedServer {
 
 	/**
+	 * 教师端凭证：1（单独一行）
+	 *
 	 * 向服务器发送的信息
-	 * 0 - 开启签到（后接开启签到班级信息）
-	 * 1 - 关闭签到
-	 * <p>
+	 * 信息同步 - "0"
+	 * 开启签到 - "1 设置的MAC地址 班级ID 签到次数"
+	 * 关闭签到 - "2"
+	 * 断开连接 - "3"
+	 *
 	 * 从服务器接收的信息
-	 * stuId stuMac - 学生签到成功信息
-	 * . - 确认关闭签到
+	 * 签到成功信息 - "学号 学生MAC地址"
+	 * 确认签到停止 - "."
+	 * 连接成功 - 0
+	 * 连接失败 - 1
 	 */
 
 	// 单例
@@ -29,7 +35,7 @@ public class DedicatedServer {
 	}
 
 	// 服务器端口号
-	private static final int serverPort = 20076;
+	private static final int SERVER_PORT = 20076;
 
 	// TCP连接客户端Socket
 	private Socket socket;
@@ -37,12 +43,16 @@ public class DedicatedServer {
 	// 是否连接
 	private boolean isConnected;
 
+	// 发送
 	private PrintWriter printWriter;
 
+	// 接收
 	private BufferedReader bufferedReader;
 
+	// GUI表格
 	private TableView tableView;
 
+	// 构造函数
 	private DedicatedServer() {
 		socket = null;
 		isConnected = false;
@@ -62,8 +72,10 @@ public class DedicatedServer {
 	}
 
 	// 连接服务器
-	public void connectToServer(String serverIP) throws IOException {
-		socket = new Socket(serverIP, serverPort);
+	public boolean connectToServer(String serverIP) throws IOException {
+		System.out.println("Dedicated server connecting...");
+
+		socket = new Socket(serverIP, SERVER_PORT);
 
 		// Socket空闲不断开
 		socket.setKeepAlive(true);
@@ -74,18 +86,37 @@ public class DedicatedServer {
 		printWriter = new PrintWriter(socket.getOutputStream());
 		bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
+		// 教师端凭证
+		printWriter.println("1");
+		printWriter.flush();
+
+		// 判断连接成功与否
+		if(!bufferedReader.readLine().equals("0")){
+			socket.close();
+			System.out.println("Dedicated server connect fail, there is already a teacher connecting");
+			return false;
+		}
+
+		System.out.println("Dedicated server connected, port = " + SERVER_PORT + ", waiting for receiving message...");
+
+
 		// 同步班级数据
+		printWriter.println("0");
+		printWriter.flush();
 		CheckInManager.getInstance().readClassesFromString(bufferedReader);
 
 		isConnected = true;
+		System.out.println("Sync data complete");
+		return true;
 	}
 
 	// 发送开启签到请求
 	public void startCheckIn(String mac, String classId, int count) {
 		Thread thread = new Thread(() -> {
 			try {
-				printWriter.write("0\n" + mac + "\n" + classId + "\n" + count);
+				printWriter.println("1 " + mac + " " + classId + " " + count);
 				printWriter.flush();
+				System.out.println("Start Check-in request sent, start receiving check-in message...");
 
 				String receivedString;
 				Class currentClass = CheckInManager.getInstance().getCurrentClass();
@@ -108,10 +139,17 @@ public class DedicatedServer {
 						tableView.refresh();
 					} else {
 						// 接收到的学生是已经存在的
-						for (int i = student.getCheckList().size() + 1; i < count; i++)
-							student.getCheckList().add("\\");
-						student.getCheckList().add(Integer.toString(count));
-						tableView.refresh();
+						if (student.getCheckList().size() < count) {
+							// 该学生本次还未签到，签到成功
+							for (int i = student.getCheckList().size() + 1; i < count; i++)
+								student.getCheckList().add("\\");
+							student.getCheckList().add(Integer.toString(count));
+							tableView.refresh();
+						} else if (student.getCheckList().get(count - 1).equals("\\")) {
+							// 该学生当前次漏签，补签成功
+							student.getCheckList().set(count - 1, Integer.toString(count));
+							tableView.refresh();
+						}
 					}
 				}
 			} catch (IOException e) {
@@ -123,15 +161,19 @@ public class DedicatedServer {
 
 	// 发送结束签到请求
 	public void stopCheckIn() {
-		printWriter.write("1");
+		printWriter.println("2");
 		printWriter.flush();
+		System.out.println("Stop Check-in request sent, start receiving check-in message...");
 	}
 
 	// 关闭连接
 	public void close() {
 		try {
+			printWriter.println("3");
+			printWriter.flush();
 			socket.close();
 			isConnected = false;
+			System.out.println("Dedicated server connection closed");
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

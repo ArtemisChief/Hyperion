@@ -1,9 +1,9 @@
-package Teacher.Component;
+package teacher.component;
 
-import Teacher.Entity.Class;
-import Teacher.Entity.Student;
-import Teacher.ServerClient.DedicatedServer;
-import Teacher.ServerClient.LocalServer;
+import teacher.network.client.DedicatedServer;
+import teacher.network.server.LocalServer;
+import teacher.entity.Class;
+import teacher.entity.Student;
 import javafx.application.Platform;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
@@ -12,10 +12,14 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Controller {
 
@@ -95,7 +99,7 @@ public class Controller {
             classComboBox.setDisable(true);
             timesSlider.setDisable(true);
 
-            localServer.Close();
+            localServer.close();
             classComboBox.getItems().clear();
             tableView.getItems().clear();
         } else {
@@ -158,7 +162,7 @@ public class Controller {
                 checkInManager.getCurrentClass().setCheckInCount((int) timesSlider.getValue());
 
             if (dedicatedModeRadioBtn.isSelected() && dedicatedServer.getIsConnected()) {
-                TextInputDialog dialog = new TextInputDialog(getLocalMac());
+                TextInputDialog dialog = new TextInputDialog(getRouterMac());
                 dialog.setTitle("Set target router MAC address");
                 dialog.setHeaderText("");
                 dialog.setContentText("Please set the target router MAC address");
@@ -193,7 +197,7 @@ public class Controller {
     // 公网模式连接到服务器
     protected void connectToDedicatedServer() {
         if (IPTxtField.getText() == null || IPTxtField.getText().equals("")) {
-            showSimpleAlert(Alert.AlertType.ERROR, "Error", "Please input the Dedicated Server IP");
+            showSimpleAlert(Alert.AlertType.ERROR, "Error", "Please input the Dedicated server IP");
             return;
         }
 
@@ -205,22 +209,32 @@ public class Controller {
                     connectBtn.setText("Connecting...");
                     connectBtn.setDisable(true);
                 });
-                dedicatedServer.connectToServer(IPTxtField.getText());
-                fillComboBox();
 
-                Platform.runLater(() -> {
-                    localModeRadioBtn.setDisable(false);
-                    dedicatedModeRadioBtn.setDisable(false);
-                    toggleCheckInBtn.setDisable(false);
-                    classComboBox.setDisable(false);
-                    timesSlider.setDisable(false);
-                    connectBtn.setText("Connected");
-                    connectBtn.setDisable(true);
-                    IPTxtField.setDisable(true);
-                });
+                if(dedicatedServer.connectToServer(IPTxtField.getText())) {
+                    fillComboBox();
+
+                    Platform.runLater(() -> {
+                        localModeRadioBtn.setDisable(false);
+                        dedicatedModeRadioBtn.setDisable(false);
+                        toggleCheckInBtn.setDisable(false);
+                        classComboBox.setDisable(false);
+                        timesSlider.setDisable(false);
+                        connectBtn.setText("Connected");
+                        connectBtn.setDisable(true);
+                        IPTxtField.setDisable(true);
+                    });
+                }else{
+                    Platform.runLater(() -> {
+                        showSimpleAlert(Alert.AlertType.ERROR, "Error", "Dedicated server connect fail, there is already a teacher connecting");
+                        connectBtn.setText("Connect");
+                        connectBtn.setDisable(false);
+                        localModeRadioBtn.setDisable(false);
+                        dedicatedModeRadioBtn.setDisable(false);
+                    });
+                }
             } catch (IOException e) {
                 Platform.runLater(() -> {
-                    showSimpleAlert(Alert.AlertType.ERROR, "Error", "Cannot connect to the server, please check your network or the Dedicated Server IP");
+                    showSimpleAlert(Alert.AlertType.ERROR, "Error", "Cannot connect to the server, please check your network or the Dedicated server IP");
                     connectBtn.setText("Connect");
                     connectBtn.setDisable(false);
                     localModeRadioBtn.setDisable(false);
@@ -265,30 +279,52 @@ public class Controller {
                 classComboBox.getItems().add(classId);
     }
 
-    // 得到本机MAC的地址
-    private String getLocalMac() {
+    // 得到第一跳路由器（默认网关）的MAC地址
+    private String getRouterMac() {
         try {
-            //获取网卡，获取地址
-            byte[] mac = NetworkInterface.getByInetAddress(InetAddress.getLocalHost()).getHardwareAddress();
-            StringBuilder stringBuilder = new StringBuilder();
-            for (int i = 0; i < mac.length; i++) {
-                if (i != 0) {
-                    stringBuilder.append("-");
-                }
-                //字节转换为整数
-                int temp = mac[i] & 0xff;
-                String str = Integer.toHexString(temp);
-                if (str.length() == 1) {
-                    stringBuilder.append("0").append(str);
-                } else {
-                    stringBuilder.append(str);
-                }
-            }
-            return stringBuilder.toString().toUpperCase();
+            Pattern pattern;
+            Matcher matcher;
+            String keyword;
+            int index;
+
+            // 得到默认网关的IP地址
+            String gateway = callCmd("ipconfig");
+            keyword = (gateway.contains("Default Gateway") ? "Default Gateway" : "默认网关") + "(.\\s)+:\\s";
+            pattern = Pattern.compile(keyword);
+            matcher = pattern.matcher(gateway);
+            matcher.find();
+            index = matcher.end();
+            gateway = gateway.substring(index, gateway.indexOf("\n", index)).trim();
+
+            // 得到默认网关的MAC地址
+            String mac = callCmd("arp -a");
+            keyword = gateway + "\\s+";
+            pattern = Pattern.compile(keyword);
+            matcher = pattern.matcher(mac);
+            matcher.find();
+            index = matcher.end();
+            return mac.substring(index, index + 17).toUpperCase().trim();
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
+    }
+
+    // 调用CMD
+    private String callCmd(String cmd) {
+        StringBuilder result = new StringBuilder();
+        String line;
+        try {
+            Process proc = Runtime.getRuntime().exec(cmd);
+            InputStreamReader is = new InputStreamReader(proc.getInputStream(), "GBK");
+            BufferedReader br = new BufferedReader(is);
+            while ((line = br.readLine()) != null) {
+                result.append(line).append("\n");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result.toString();
     }
 
     // 弹出对话框
