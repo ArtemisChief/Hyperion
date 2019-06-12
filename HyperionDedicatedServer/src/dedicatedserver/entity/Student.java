@@ -1,4 +1,4 @@
-package DedicatedServer.Entity;
+package dedicatedserver.entity;
 
 import java.util.Vector;
 
